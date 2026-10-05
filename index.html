@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Character Introduction</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#eaf4f3;color:#222;font-family:"Comic Sans MS","Trebuchet MS",sans-serif}
+header{background:#286b69;color:white;text-align:center;padding:13px 18px;font-size:28px;font-weight:bold}
+.app{display:block;max-width:1200px;margin:auto;padding:18px;min-height:calc(100vh - 64px)}
+.panel{background:white;border-radius:20px;box-shadow:0 4px 12px #0002;overflow:hidden}
+.left-panel{padding:18px}
+.right-column{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+.section{background:#dfe7e7;border-radius:20px;padding:18px;box-shadow:0 4px 12px #0002}
+.section-title{margin:0 0 12px;text-align:center;font-size:28px;color:#225f5d}
+.photo-box{position:relative;width:min(100%,410px);aspect-ratio:4/3;margin:0 auto 12px;background:#f6f6f6;border:4px solid #286b69;border-radius:22px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+#cameraVideo,#capturedPhoto{width:100%;height:100%;object-fit:cover;display:none}
+.photo-placeholder{text-align:center;color:#777;padding:20px;font-size:17px}
+.camera-button{position:absolute;top:10px;left:10px;z-index:5;width:54px;height:46px;border:3px solid #222;border-radius:11px;background:white;font-size:25px;cursor:pointer}
+.camera-actions{display:none;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px 0}
+.camera-action{border:2px solid #333;border-radius:10px;padding:8px 12px;background:white;font:700 15px inherit;cursor:pointer}
+.camera-action.primary{background:#68c5ff}.camera-facing.active-facing{background:#ffe082;border-color:#9a6b00}
+.camera-status{min-height:20px;text-align:center;font-size:13px;color:#555}
+.name-row{display:flex;gap:8px;margin:12px 0}
+.name-row input{min-width:0;flex:1;padding:11px 14px;border:3px solid #286b69;border-radius:12px;font:20px inherit}
+.pronouns{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:10px 0 18px}
+.pronoun-btn{padding:10px 4px;border:3px solid #333;border-radius:12px;background:#ddd;font:700 20px inherit;cursor:pointer}
+.pronoun-btn.active{background:#ff82d5}
+.output{border-top:3px solid #bdd9d8;padding-top:8px}
+.sentence{font-size:27px;margin:13px 0;padding:7px 6px;border-bottom:3px solid #55c4c1;display:flex;align-items:center;gap:10px;min-height:82px}.sentence-text{flex:1}.sentence-picture{width:70px;height:70px;flex:0 0 70px;border:2px solid #9bb9b8;border-radius:10px;background:#fff;object-fit:contain;padding:3px}.sentence-picture.empty{visibility:hidden}
+.answer{color:#d9a900;font-weight:bold}
+.mode-row{display:flex;justify-content:center;gap:10px;margin-bottom:12px}
+.mode-btn{padding:9px 20px;border:3px solid #333;border-radius:11px;font:700 18px inherit;cursor:pointer;background:#ddd}
+.mode-btn.can.active{background:#65c1ff}
+.mode-btn.cant.active{background:#ff7598}
+.help{text-align:center;margin:-5px 0 12px;color:#555;font-size:14px}
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+.choice-card{min-height:72px;background:white;border:3px solid #444;border-radius:11px;padding:7px 5px;font:700 14px inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.choice-card span{font-size:25px}.choice-card img{width:72px;height:58px;object-fit:contain;display:block}.choice-card{min-height:105px}
+.ability-card.selected-can{background:#c9ecff;border-color:#1888c5}
+.ability-card.selected-cant{background:#ffd0dc;border-color:#d83d67}
+.personality-card.selected{background:#c9f2ff;border-color:#008bb8}
+.reset{width:100%;margin-top:18px;padding:11px;border:0;border-radius:12px;background:#286b69;color:white;font:700 19px inherit;cursor:pointer}
+@media(max-width:1050px){.right-column{grid-template-columns:1fr}}
+@media(max-width:650px){.cards{grid-template-columns:repeat(3,1fr)}.sentence{font-size:22px}}
+
+
+.free-writing{margin:18px auto 0;max-width:900px}
+.free-writing h2{text-align:center;color:#225f5d;margin:0 0 6px;font-size:25px}
+.free-writing .writing-help{text-align:center;color:#666;font-size:14px;margin-bottom:8px}
+#freeWriting{width:100%;height:190px;resize:none;border:3px solid #286b69;border-radius:15px;padding:15px;font:22px/1.55 "Comic Sans MS","Trebuchet MS",sans-serif;background:#fff;outline:none}
+#freeWriting:focus{box-shadow:0 0 0 4px #55c4c144}
+.writing-counter{text-align:right;margin-top:5px;font-size:14px;font-weight:bold;color:#286b69}
+.writing-warning{color:#c83d4d}
+.reference-note{text-align:center;color:#555;margin:0 0 12px;font-size:14px}
+.choice-card{cursor:default}
+
+/* Full-screen colorful character presentation */
+.present-btn{width:100%;margin-top:10px;padding:14px;border:0;border-radius:13px;background:linear-gradient(100deg,#14c9f5,#8061ff,#ff69b5);color:white;font:700 21px "Comic Sans MS",sans-serif;cursor:pointer;box-shadow:0 4px 0 #347b9b}
+.presentation{position:fixed;inset:0;z-index:100;background:radial-gradient(circle at 10% 15%,#b7f1ff 0 3%,transparent 3.2%),radial-gradient(circle at 92% 85%,#ffe999 0 4%,transparent 4.2%),#f9fff0;overflow:auto;padding:18px;display:none}
+.presentation.show{display:flex;flex-direction:column}
+.present-toolbar{display:flex;justify-content:flex-end;gap:10px;margin-bottom:10px}
+.present-toolbar button{border:2px solid #174778;border-radius:12px;background:#fff;padding:9px 18px;font:700 17px "Comic Sans MS",sans-serif;cursor:pointer}
+.present-layout{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:1700px;width:100%;margin:auto;align-items:stretch}
+.present-photo-frame{position:relative;min-height:350px;border:13px solid #16bdf0;outline:7px solid #ffe04b;outline-offset:-24px;border-radius:38px;background:#e2f8ff;box-shadow:0 0 0 5px #273e95,0 9px 25px #0002;display:flex;flex-direction:column;padding:19px;margin:15px 5px 20px}
+.present-photo[hidden],.present-photo-placeholder[hidden]{display:none}.present-photo{flex:1;min-height:0;width:100%;height:100%;object-fit:contain;border-radius:18px;background:white}
+.present-photo-placeholder{flex:1;display:flex;align-items:center;justify-content:center;font-size:30px;color:#567}
+.present-name{align-self:center;max-width:95%;overflow-wrap:anywhere;margin:-7px 0 0;background:linear-gradient(90deg,#ffdf6c,#fff3ad,#ffcf53);border:5px solid white;border-radius:50% 50% 22px 22px;padding:8px 30px;text-align:center;color:#172e6c;font-size:clamp(25px,3.3vw,58px);font-weight:900;box-shadow:0 5px 0 #1c4096}
+.present-decoration{position:absolute;z-index:1;font-size:clamp(26px,4vw,65px);filter:drop-shadow(2px 3px 0 white);pointer-events:none}.present-decoration.one{top:-30px;left:-24px}.present-decoration.two{top:-28px;right:-16px}.present-decoration.three{bottom:5px;right:-24px}.present-decoration.four{bottom:0;left:-20px}
+.present-info{display:flex;flex-direction:column;justify-content:center;gap:clamp(10px,2vh,22px);padding:8px 0}
+.present-line{flex:1;min-height:105px;display:flex;align-items:center;gap:clamp(8px,2vw,24px);background:#fff;border:5px solid #42c8fa;border-radius:35px;padding:12px clamp(12px,2vw,32px);font-size:clamp(23px,3vw,49px);font-weight:bold;color:#14245a;box-shadow:0 4px 0 #d4f0ff}
+.present-line:nth-child(2){border-color:#ff82b0;background:#fff7fb}.present-line:nth-child(3){border-color:#61d9f1}.present-line:nth-child(4){border-color:#ffcc59;background:#fffdf4}
+.present-line img{width:clamp(65px,9vw,155px);height:clamp(65px,9vw,155px);object-fit:contain;flex-shrink:0}.present-line .word{color:#008d91}.present-line:nth-child(2) .word{color:#f33d85}.present-line:nth-child(3) .word{color:#168ed1}.present-line:nth-child(4) .word{color:#ed9a00}
+.present-line[hidden]{display:none}
+@media(max-width:800px){.present-layout{grid-template-columns:1fr;gap:12px}.present-photo-frame{min-height:300px;max-height:60vh}.present-info{gap:12px}.present-line{min-height:90px;font-size:clamp(23px,5vw,38px)}.presentation{padding:12px}}
+</style>
+</head>
+<body>
+<header>👤 Character Introduction</header>
+<main class="app">
+<section class="panel left-panel">
+  <div class="photo-box">
+    <button class="camera-button" id="cameraBtn" type="button" aria-label="Open camera">📷</button>
+    <div class="photo-placeholder" id="photoPlaceholder">Click the camera to take a friend's picture.</div>
+    <video id="cameraVideo" autoplay playsinline muted></video>
+    <img id="capturedPhoto" alt="Captured photo">
+    <canvas id="photoCanvas" hidden></canvas>
+  </div>
+  <div class="camera-actions" id="cameraActions">
+    <button class="camera-action camera-facing active-facing" id="frontCameraBtn" type="button">🤳 Front</button>
+    <button class="camera-action camera-facing" id="rearCameraBtn" type="button">📷 Rear</button>
+    <button class="camera-action primary" id="takePhotoBtn" type="button">📸 Take Photo</button>
+    <button class="camera-action" id="retakeBtn" type="button">↻ Retake</button>
+    <button class="camera-action" id="closeCameraBtn" type="button">✕ Close</button>
+  </div>
+  <div style="display:flex;justify-content:center;margin:8px 0;">
+    <button class="camera-action" id="uploadPhotoBtn" type="button">📁 Upload Photo</button>
+    <input id="photoFileInput" type="file" accept="image/*" hidden>
+  </div>
+  <div class="camera-status" id="cameraStatus"></div>
+
+  <div class="free-writing">
+    <h2>✏️ Write Your Introduction</h2>
+    <div class="writing-help">Write anything you like. Maximum 5 lines and 50 words.</div>
+    <textarea id="freeWriting" rows="5" placeholder="Write your introduction here..."></textarea>
+    <div class="writing-counter" id="writingCounter">0 / 50 words • 1 / 5 lines</div>
+  </div>
+
+  <button class="reset" id="resetBtn">🔄 Reset</button>
+  <button class="present-btn" id="presentBtn" type="button">🌈 Save &amp; Present</button>
+</section>
+
+<div class="right-column">
+  <section class="section">
+    <h2 class="section-title">🏃 Abilities / Sports</h2>
+    <div class="reference-note">Use these pictures and words for ideas.</div>
+    <div class="cards" id="abilityCards">
+      <button class="choice-card ability-card" data-value="play soccer" data-image="play soccer.png"><img src="play soccer.png" alt="play soccer">play soccer</button>
+<button class="choice-card ability-card" data-value="play baseball" data-image="play baseball.png"><img src="play baseball.png" alt="play baseball">play baseball</button>
+<button class="choice-card ability-card" data-value="play badminton" data-image="play badminton.png"><img src="play badminton.png" alt="play badminton">play badminton</button>
+<button class="choice-card ability-card" data-value="play table tennis" data-image="play table tennis.png"><img src="play table tennis.png" alt="play table tennis">play table tennis</button>
+<button class="choice-card ability-card" data-value="play volleyball" data-image="play volleyball.png"><img src="play volleyball.png" alt="play volleyball">play volleyball</button>
+<button class="choice-card ability-card" data-value="swim" data-image="swim.png"><img src="swim.png" alt="swim">swim</button>
+<button class="choice-card ability-card" data-value="skate" data-image="skate.png"><img src="skate.png" alt="skate">skate</button>
+<button class="choice-card ability-card" data-value="ski" data-image="ski.png"><img src="ski.png" alt="ski">ski</button>
+<button class="choice-card ability-card" data-value="do kendo" data-image="do kendo.png"><img src="do kendo.png" alt="do kendo">do kendo</button>
+<button class="choice-card ability-card" data-value="do judo" data-image="do judo.png"><img src="do judo.png" alt="do judo">do judo</button>
+<button class="choice-card ability-card" data-value="play shogi" data-image="play shogi.png"><img src="play shogi.png" alt="play shogi">play shogi</button>
+<button class="choice-card ability-card" data-value="play kendama" data-image="kendama.png"><img src="kendama.png" alt="play kendama">play kendama</button>
+<button class="choice-card ability-card" data-value="play the piano" data-image="play the piano.png"><img src="play the piano.png" alt="play the piano">play the piano</button>
+<button class="choice-card ability-card" data-value="play the recorder" data-image="play the recorder.png"><img src="play the recorder.png" alt="play the recorder">play the recorder</button>
+<button class="choice-card ability-card" data-value="ride a unicycle" data-image="ride a unicycle.png"><img src="ride a unicycle.png" alt="ride a unicycle">ride a unicycle</button>
+<button class="choice-card ability-card" data-value="cook" data-image="cook.png"><img src="cook.png" alt="cook">cook</button>
+<button class="choice-card ability-card" data-value="run fast" data-image="run fast.png"><img src="run fast.png" alt="run fast">run fast</button>
+<button class="choice-card ability-card" data-value="jump high" data-image="jump high.png"><img src="jump high.png" alt="jump high">jump high</button>
+<button class="choice-card ability-card" data-value="sing well" data-image="sing well.png"><img src="sing well.png" alt="sing well">sing well</button>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title">😊 Personality</h2>
+    <div class="reference-note">Use these personality words for ideas.</div>
+    <div class="cards" id="personalityCards">
+      <button class="choice-card personality-card" data-value="kind" data-image="kind.png"><img src="kind.png" alt="kind">kind</button>
+<button class="choice-card personality-card" data-value="funny" data-image="funny.png"><img src="funny.png" alt="funny">funny</button>
+<button class="choice-card personality-card" data-value="friendly" data-image="friendly.png"><img src="friendly.png" alt="friendly">friendly</button>
+<button class="choice-card personality-card" data-value="cheerful" data-image="cheerful.png"><img src="cheerful.png" alt="cheerful">cheerful</button>
+<button class="choice-card personality-card" data-value="active" data-image="active.png"><img src="active.png" alt="active">active</button>
+<button class="choice-card personality-card" data-value="quiet" data-image="quiet.png"><img src="quiet.png" alt="quiet">quiet</button>
+<button class="choice-card personality-card" data-value="shy" data-image="shy.png"><img src="shy.png" alt="shy">shy</button>
+<button class="choice-card personality-card" data-value="helpful" data-image="helpful.png"><img src="helpful.png" alt="helpful">helpful</button>
+<button class="choice-card personality-card" data-value="smart" data-image=""><span>🧠</span>smart</button>
+<button class="choice-card personality-card" data-value="brave" data-image="brave.png"><img src="brave.png" alt="brave">brave</button>
+<button class="choice-card personality-card" data-value="nice" data-image=""><span>👍</span>nice</button>
+<button class="choice-card personality-card" data-value="energetic" data-image="energetic.png"><img src="energetic.png" alt="energetic">energetic</button>
+    </div>
+  </section>
+</div>
+</main>
+
+
+<!-- Presentation is a separate view; original controls and selections stay untouched. -->
+<div class="presentation" id="presentation" role="dialog" aria-label="Character presentation" aria-modal="true">
+  <div class="present-toolbar"><button id="editPresentation" type="button">✏️ Edit</button><button id="fullScreenPresentation" type="button">⛶ Full Screen</button></div>
+  <div class="present-layout">
+    <div class="present-photo-frame">
+      <span class="present-decoration one">🌟</span><span class="present-decoration two">✨</span><span class="present-decoration three">⭐</span><span class="present-decoration four">💫</span>
+      <img id="presentPhoto" class="present-photo" alt="Character photo" hidden>
+      <div id="presentPhotoPlaceholder" class="present-photo-placeholder">📷 Add a photo</div>
+      <div class="present-name" id="presentName"></div>
+    </div>
+    <div class="present-info" id="presentInfo"></div>
+  </div>
+</div>
+
+<script>
+let cameraStream=null;
+let cameraFacing="user";
+const cameraBtn=document.getElementById("cameraBtn"),cameraVideo=document.getElementById("cameraVideo"),capturedPhoto=document.getElementById("capturedPhoto"),photoCanvas=document.getElementById("photoCanvas"),photoPlaceholder=document.getElementById("photoPlaceholder"),cameraActions=document.getElementById("cameraActions"),takePhotoBtn=document.getElementById("takePhotoBtn"),retakeBtn=document.getElementById("retakeBtn"),closeCameraBtn=document.getElementById("closeCameraBtn"),frontCameraBtn=document.getElementById("frontCameraBtn"),rearCameraBtn=document.getElementById("rearCameraBtn"),uploadPhotoBtn=document.getElementById("uploadPhotoBtn"),photoFileInput=document.getElementById("photoFileInput"),cameraStatus=document.getElementById("cameraStatus"),freeWriting=document.getElementById("freeWriting"),writingCounter=document.getElementById("writingCounter");
+
+function stopCamera(){if(cameraStream){cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null}cameraVideo.srcObject=null}
+async function startCamera(){stopCamera();if(!navigator.mediaDevices?.getUserMedia){cameraStatus.textContent="Camera is not supported in this browser.";return}try{cameraStatus.textContent="Opening camera…";cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:cameraFacing}},audio:false});cameraVideo.srcObject=cameraStream;cameraVideo.style.display="block";capturedPhoto.style.display="none";photoPlaceholder.style.display="none";cameraActions.style.display="flex";takePhotoBtn.style.display="inline-block";retakeBtn.style.display="none";closeCameraBtn.style.display="inline-block";cameraStatus.textContent="Camera ready. Click Take Photo."}catch(e){cameraStatus.textContent="Please allow camera access and try again.";photoPlaceholder.style.display="block"}}
+function takePhoto(){if(!cameraStream||!cameraVideo.videoWidth)return;photoCanvas.width=cameraVideo.videoWidth;photoCanvas.height=cameraVideo.videoHeight;photoCanvas.getContext("2d").drawImage(cameraVideo,0,0,photoCanvas.width,photoCanvas.height);capturedPhoto.src=photoCanvas.toDataURL("image/jpeg",.9);capturedPhoto.style.display="block";cameraVideo.style.display="none";stopCamera();takePhotoBtn.style.display="none";retakeBtn.style.display="inline-block";closeCameraBtn.style.display="none";cameraStatus.textContent="Photo taken."}
+function clearPhoto(){stopCamera();capturedPhoto.removeAttribute("src");capturedPhoto.style.display="none";cameraVideo.style.display="none";photoPlaceholder.style.display="block";cameraActions.style.display="none";cameraStatus.textContent="";photoFileInput.value=""}
+uploadPhotoBtn.onclick=()=>photoFileInput.click();
+photoFileInput.onchange=()=>{const file=photoFileInput.files&&photoFileInput.files[0];if(!file)return;if(!file.type.startsWith("image/")){cameraStatus.textContent="Please choose an image file.";photoFileInput.value="";return}stopCamera();const reader=new FileReader();reader.onload=()=>{capturedPhoto.src=reader.result;capturedPhoto.style.display="block";cameraVideo.style.display="none";photoPlaceholder.style.display="none";cameraActions.style.display="none";cameraStatus.textContent="Photo uploaded."};reader.readAsDataURL(file)};
+function updateFacingButtons(){frontCameraBtn.classList.toggle("active-facing",cameraFacing==="user");rearCameraBtn.classList.toggle("active-facing",cameraFacing==="environment")}
+async function switchCamera(facing){cameraFacing=facing;updateFacingButtons();if(cameraStream)await startCamera()}
+frontCameraBtn.onclick=()=>switchCamera("user");rearCameraBtn.onclick=()=>switchCamera("environment");cameraBtn.onclick=startCamera;takePhotoBtn.onclick=takePhoto;retakeBtn.onclick=startCamera;closeCameraBtn.onclick=()=>{stopCamera();cameraVideo.style.display="none";photoPlaceholder.style.display=capturedPhoto.src?"none":"block";cameraActions.style.display="none";cameraStatus.textContent=""};window.addEventListener("pagehide",stopCamera);
+
+function wordsOf(text){return text.trim()?text.trim().split(/\s+/):[]}
+function enforceWritingLimit(){let value=freeWriting.value.replace(/\r/g,"");let lines=value.split("\n");if(lines.length>5){lines=lines.slice(0,5);value=lines.join("\n")}let words=wordsOf(value);if(words.length>50){let count=0;value=value.replace(/\S+/g,m=>{count++;return count<=50?m:""}).replace(/[ \t]+(?=\n|$)/g,"").replace(/ {2,}/g," ");words=wordsOf(value)}if(freeWriting.value!==value)freeWriting.value=value;lines=value.split("\n");const lineCount=value.length?lines.length:1;writingCounter.textContent=`${words.length} / 50 words • ${lineCount} / 5 lines`;writingCounter.classList.toggle("writing-warning",words.length>=50||lineCount>=5)}
+freeWriting.addEventListener("input",enforceWritingLimit);enforceWritingLimit();
+
+document.getElementById("resetBtn").onclick=()=>{clearPhoto();freeWriting.value="";enforceWritingLimit()};
+const presentation=document.getElementById("presentation");
+function openPresentation(){const text=freeWriting.value.trim();const photo=capturedPhoto.getAttribute("src");const pic=document.getElementById("presentPhoto");pic.hidden=!photo;if(photo)pic.src=photo;else pic.removeAttribute("src");document.getElementById("presentPhotoPlaceholder").hidden=!!photo;document.getElementById("presentName").textContent="Character Introduction";const info=document.getElementById("presentInfo");info.replaceChildren();const lines=text?text.split("\n").filter(x=>x.trim()):["Write your introduction first!"];lines.forEach(t=>{const line=document.createElement("div");line.className="present-line";line.textContent=t;info.appendChild(line)});presentation.classList.add("show");document.body.style.overflow="hidden";if(presentation.requestFullscreen)presentation.requestFullscreen().catch(()=>{})}
+function closePresentation(){if(document.fullscreenElement===presentation)document.exitFullscreen().catch(()=>{});presentation.classList.remove("show");document.body.style.overflow=""}
+document.getElementById("presentBtn").addEventListener("click",openPresentation);document.getElementById("editPresentation").addEventListener("click",closePresentation);document.getElementById("fullScreenPresentation").addEventListener("click",()=>{if(document.fullscreenElement===presentation)document.exitFullscreen().catch(()=>{});else presentation.requestFullscreen?.().catch(()=>{})});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&presentation.classList.contains("show"))closePresentation()});
+</script>
+</body>
+</html>
