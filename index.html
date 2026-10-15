@@ -74,6 +74,26 @@ header{background:#286b69;color:white;text-align:center;padding:13px 18px;font-s
 .present-line img{width:clamp(65px,9vw,155px);height:clamp(65px,9vw,155px);object-fit:contain;flex-shrink:0}.present-line .word{color:#008d91}.present-line:nth-child(2) .word{color:#f33d85}.present-line:nth-child(3) .word{color:#168ed1}.present-line:nth-child(4) .word{color:#ed9a00}
 .present-line[hidden]{display:none}
 @media(max-width:800px){.present-layout{grid-template-columns:1fr;gap:12px}.present-photo-frame{min-height:300px;max-height:60vh}.present-info{gap:12px}.present-line{min-height:90px;font-size:clamp(23px,5vw,38px)}.presentation{padding:12px}}
+
+/* Character-information worksheet */
+.character-information,.free-writing{max-width:920px;margin:22px auto 0}
+.character-information h2,.free-writing h2{text-align:center;color:#225f5d;font-size:26px;margin:0 0 9px}
+.info-field{display:grid;grid-template-columns:minmax(180px,38%) 1fr;align-items:center;gap:15px;border-bottom:1px solid #dce8e7;padding:10px 4px}
+.info-field span{display:flex;flex-direction:column;gap:3px}.info-field strong{font-size:17px}.info-field small{font-size:13px;color:#666}
+.info-field input{width:100%;min-width:0;border:0;border-bottom:2px solid #b6d2d0;border-radius:0;padding:9px 6px;font:18px "Trebuchet MS",sans-serif;background:transparent;outline:none}
+.info-field input:focus{border-color:#286b69;background:#f0fbfa}
+#writingLines{border:3px solid #286b69;border-radius:16px;padding:12px 18px;background:#fff}
+.sentence-entry{display:flex;align-items:center;gap:12px;margin:3px 0;min-height:55px}
+.sentence-entry span{width:25px;color:#286b69;font-weight:bold;font-size:18px}
+.writing-line{flex:1;min-width:0;width:100%;height:50px;border:0;border-bottom:2px solid #a9c9c7;border-radius:0;outline:none;background:transparent;font:21px "Trebuchet MS",sans-serif;padding:8px 5px}
+.writing-line:focus{border-bottom-color:#168f8a;background:#f4fffe}
+.writing-message{min-height:19px;color:#bb4550;font-size:13px;text-align:right}
+.reference-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:18px}
+.vocab-section:last-child{grid-column:1/-1}
+.vocab-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.vocab-item{display:flex;justify-content:space-between;align-items:center;gap:8px;background:white;border:1px solid #c6d9d8;border-radius:9px;padding:10px 12px;font-size:15px}
+.vocab-item span{font-size:13px;color:#586c6b;text-align:right}
+@media(max-width:650px){.info-field{grid-template-columns:1fr;gap:3px}.reference-grid{grid-template-columns:1fr}.vocab-section:last-child{grid-column:auto}.vocab-list{grid-template-columns:1fr}.writing-line{font-size:17px}.sentence-entry{gap:5px}}
 </style>
 </head>
 <body>
@@ -100,63 +120,21 @@ header{background:#286b69;color:white;text-align:center;padding:13px 18px;font-s
   </div>
   <div class="camera-status" id="cameraStatus"></div>
 
-  <div class="free-writing">
-    <h2>✏️ Write Your Introduction</h2>
-    <div class="writing-help">Write anything you like. Maximum 5 lines and 50 words.</div>
-    <textarea id="freeWriting" rows="5" placeholder="Write your introduction here..."></textarea>
-    <div class="writing-counter" id="writingCounter">0 / 50 words • 1 / 5 lines</div>
-  </div>
-
+  <section class="character-information"><h2>📝 Character Information</h2><p class="writing-help">Choose the information you want to use. / 書きたい情報を選びましょう。</p><label class="info-field"><span><strong>Name</strong><small>名前</small></span><input id="field-name" type="text" autocomplete="off" placeholder="Write here..."></label>
+<label class="info-field"><span><strong>Job / Occupation</strong><small>職業</small></span><input id="field-job" type="text" autocomplete="off" placeholder="Write here..."></label>
+<label class="info-field"><span><strong>Country / Hometown / Other Information</strong><small>出身国・出身地・その他の情報</small></span><input id="field-origin" type="text" autocomplete="off" placeholder="Write here..."></label>
+<label class="info-field"><span><strong>Characteristics</strong><small>特徴</small></span><input id="field-traits" type="text" autocomplete="off" placeholder="Write here..."></label>
+<label class="info-field"><span><strong>Other Information</strong><small>その他の情報</small></span><input id="field-other" type="text" autocomplete="off" placeholder="Write here..."></label></section>
+<div class="free-writing"><h2>✏️ Write Your Introduction</h2><div class="writing-help">One sentence per line. Maximum 50 words.</div><div id="writingLines"><label class="sentence-entry"><span>1.</span><input class="writing-line" type="text" aria-label="Sentence 1" autocomplete="off" placeholder=""></label>
+<label class="sentence-entry"><span>2.</span><input class="writing-line" type="text" aria-label="Sentence 2" autocomplete="off" placeholder=""></label>
+<label class="sentence-entry"><span>3.</span><input class="writing-line" type="text" aria-label="Sentence 3" autocomplete="off" placeholder=""></label>
+<label class="sentence-entry"><span>4.</span><input class="writing-line" type="text" aria-label="Sentence 4" autocomplete="off" placeholder=""></label>
+<label class="sentence-entry"><span>5.</span><input class="writing-line" type="text" aria-label="Sentence 5" autocomplete="off" placeholder=""></label></div><div class="writing-counter" id="writingCounter">0 / 50 words • 0 / 5 sentences</div><div class="writing-message" id="writingMessage" role="status"></div></div>
   <button class="reset" id="resetBtn">🔄 Reset</button>
   <button class="present-btn" id="presentBtn" type="button">🌈 Save &amp; Present</button>
 </section>
 
-<div class="right-column">
-  <section class="section">
-    <h2 class="section-title">🏃 Abilities / Sports</h2>
-    <div class="reference-note">Use these pictures and words for ideas.</div>
-    <div class="cards" id="abilityCards">
-      <button class="choice-card ability-card" data-value="play soccer" data-image="play soccer.png"><img src="play soccer.png" alt="play soccer">play soccer</button>
-<button class="choice-card ability-card" data-value="play baseball" data-image="play baseball.png"><img src="play baseball.png" alt="play baseball">play baseball</button>
-<button class="choice-card ability-card" data-value="play badminton" data-image="play badminton.png"><img src="play badminton.png" alt="play badminton">play badminton</button>
-<button class="choice-card ability-card" data-value="play table tennis" data-image="play table tennis.png"><img src="play table tennis.png" alt="play table tennis">play table tennis</button>
-<button class="choice-card ability-card" data-value="play volleyball" data-image="play volleyball.png"><img src="play volleyball.png" alt="play volleyball">play volleyball</button>
-<button class="choice-card ability-card" data-value="swim" data-image="swim.png"><img src="swim.png" alt="swim">swim</button>
-<button class="choice-card ability-card" data-value="skate" data-image="skate.png"><img src="skate.png" alt="skate">skate</button>
-<button class="choice-card ability-card" data-value="ski" data-image="ski.png"><img src="ski.png" alt="ski">ski</button>
-<button class="choice-card ability-card" data-value="do kendo" data-image="do kendo.png"><img src="do kendo.png" alt="do kendo">do kendo</button>
-<button class="choice-card ability-card" data-value="do judo" data-image="do judo.png"><img src="do judo.png" alt="do judo">do judo</button>
-<button class="choice-card ability-card" data-value="play shogi" data-image="play shogi.png"><img src="play shogi.png" alt="play shogi">play shogi</button>
-<button class="choice-card ability-card" data-value="play kendama" data-image="kendama.png"><img src="kendama.png" alt="play kendama">play kendama</button>
-<button class="choice-card ability-card" data-value="play the piano" data-image="play the piano.png"><img src="play the piano.png" alt="play the piano">play the piano</button>
-<button class="choice-card ability-card" data-value="play the recorder" data-image="play the recorder.png"><img src="play the recorder.png" alt="play the recorder">play the recorder</button>
-<button class="choice-card ability-card" data-value="ride a unicycle" data-image="ride a unicycle.png"><img src="ride a unicycle.png" alt="ride a unicycle">ride a unicycle</button>
-<button class="choice-card ability-card" data-value="cook" data-image="cook.png"><img src="cook.png" alt="cook">cook</button>
-<button class="choice-card ability-card" data-value="run fast" data-image="run fast.png"><img src="run fast.png" alt="run fast">run fast</button>
-<button class="choice-card ability-card" data-value="jump high" data-image="jump high.png"><img src="jump high.png" alt="jump high">jump high</button>
-<button class="choice-card ability-card" data-value="sing well" data-image="sing well.png"><img src="sing well.png" alt="sing well">sing well</button>
-    </div>
-  </section>
-
-  <section class="section">
-    <h2 class="section-title">😊 Personality</h2>
-    <div class="reference-note">Use these personality words for ideas.</div>
-    <div class="cards" id="personalityCards">
-      <button class="choice-card personality-card" data-value="kind" data-image="kind.png"><img src="kind.png" alt="kind">kind</button>
-<button class="choice-card personality-card" data-value="funny" data-image="funny.png"><img src="funny.png" alt="funny">funny</button>
-<button class="choice-card personality-card" data-value="friendly" data-image="friendly.png"><img src="friendly.png" alt="friendly">friendly</button>
-<button class="choice-card personality-card" data-value="cheerful" data-image="cheerful.png"><img src="cheerful.png" alt="cheerful">cheerful</button>
-<button class="choice-card personality-card" data-value="active" data-image="active.png"><img src="active.png" alt="active">active</button>
-<button class="choice-card personality-card" data-value="quiet" data-image="quiet.png"><img src="quiet.png" alt="quiet">quiet</button>
-<button class="choice-card personality-card" data-value="shy" data-image="shy.png"><img src="shy.png" alt="shy">shy</button>
-<button class="choice-card personality-card" data-value="helpful" data-image="helpful.png"><img src="helpful.png" alt="helpful">helpful</button>
-<button class="choice-card personality-card" data-value="smart" data-image=""><span>🧠</span>smart</button>
-<button class="choice-card personality-card" data-value="brave" data-image="brave.png"><img src="brave.png" alt="brave">brave</button>
-<button class="choice-card personality-card" data-value="nice" data-image=""><span>👍</span>nice</button>
-<button class="choice-card personality-card" data-value="energetic" data-image="energetic.png"><img src="energetic.png" alt="energetic">energetic</button>
-    </div>
-  </section>
-</div>
+<div class="reference-grid"><section class="section vocab-section"><h2 class="section-title">😊 Personality / 特徴</h2><p class="reference-note">Vocabulary ideas / 参考単語</p><div class="vocab-list"><div class="vocab-item"><strong>kind</strong><span>親切な</span></div><div class="vocab-item"><strong>funny</strong><span>おもしろい</span></div><div class="vocab-item"><strong>friendly</strong><span>友好的な</span></div><div class="vocab-item"><strong>cheerful</strong><span>明るい</span></div><div class="vocab-item"><strong>active</strong><span>活発な</span></div><div class="vocab-item"><strong>quiet</strong><span>静かな</span></div><div class="vocab-item"><strong>shy</strong><span>恥ずかしがり屋の</span></div><div class="vocab-item"><strong>helpful</strong><span>人助けをする</span></div><div class="vocab-item"><strong>smart</strong><span>頭のよい</span></div><div class="vocab-item"><strong>brave</strong><span>勇敢な</span></div><div class="vocab-item"><strong>nice</strong><span>優しい</span></div><div class="vocab-item"><strong>energetic</strong><span>元気な</span></div><div class="vocab-item"><strong>cool</strong><span>かっこいい</span></div><div class="vocab-item"><strong>strong</strong><span>強い</span></div></div></section><section class="section vocab-section"><h2 class="section-title">🌏 Countries / 出身国</h2><p class="reference-note">Vocabulary ideas / 参考単語</p><div class="vocab-list"><div class="vocab-item"><strong>Japan</strong><span>日本</span></div><div class="vocab-item"><strong>Philippines</strong><span>フィリピン</span></div><div class="vocab-item"><strong>United States</strong><span>アメリカ</span></div><div class="vocab-item"><strong>Canada</strong><span>カナダ</span></div><div class="vocab-item"><strong>Australia</strong><span>オーストラリア</span></div><div class="vocab-item"><strong>United Kingdom</strong><span>イギリス</span></div><div class="vocab-item"><strong>South Korea</strong><span>韓国</span></div><div class="vocab-item"><strong>China</strong><span>中国</span></div><div class="vocab-item"><strong>France</strong><span>フランス</span></div><div class="vocab-item"><strong>Brazil</strong><span>ブラジル</span></div><div class="vocab-item"><strong>India</strong><span>インド</span></div><div class="vocab-item"><strong>Italy</strong><span>イタリア</span></div><div class="vocab-item"><strong>Germany</strong><span>ドイツ</span></div><div class="vocab-item"><strong>Thailand</strong><span>タイ</span></div></div></section><section class="section vocab-section"><h2 class="section-title">💼 Jobs / 職業</h2><p class="reference-note">Vocabulary ideas / 参考単語</p><div class="vocab-list"><div class="vocab-item"><strong>teacher</strong><span>先生</span></div><div class="vocab-item"><strong>doctor</strong><span>医者</span></div><div class="vocab-item"><strong>singer</strong><span>歌手</span></div><div class="vocab-item"><strong>actor</strong><span>俳優</span></div><div class="vocab-item"><strong>actress</strong><span>女優</span></div><div class="vocab-item"><strong>athlete</strong><span>スポーツ選手</span></div><div class="vocab-item"><strong>soccer player</strong><span>サッカー選手</span></div><div class="vocab-item"><strong>baseball player</strong><span>野球選手</span></div><div class="vocab-item"><strong>scientist</strong><span>科学者</span></div><div class="vocab-item"><strong>artist</strong><span>芸術家</span></div><div class="vocab-item"><strong>samurai</strong><span>侍</span></div><div class="vocab-item"><strong>ninja</strong><span>忍者</span></div><div class="vocab-item"><strong>YouTuber</strong><span>ユーチューバー</span></div><div class="vocab-item"><strong>chef</strong><span>料理人</span></div><div class="vocab-item"><strong>writer</strong><span>作家</span></div><div class="vocab-item"><strong>musician</strong><span>音楽家</span></div><div class="vocab-item"><strong>student</strong><span>学生</span></div><div class="vocab-item"><strong>police officer</strong><span>警察官</span></div></div></section></div>
 </main>
 
 
@@ -177,7 +155,7 @@ header{background:#286b69;color:white;text-align:center;padding:13px 18px;font-s
 <script>
 let cameraStream=null;
 let cameraFacing="user";
-const cameraBtn=document.getElementById("cameraBtn"),cameraVideo=document.getElementById("cameraVideo"),capturedPhoto=document.getElementById("capturedPhoto"),photoCanvas=document.getElementById("photoCanvas"),photoPlaceholder=document.getElementById("photoPlaceholder"),cameraActions=document.getElementById("cameraActions"),takePhotoBtn=document.getElementById("takePhotoBtn"),retakeBtn=document.getElementById("retakeBtn"),closeCameraBtn=document.getElementById("closeCameraBtn"),frontCameraBtn=document.getElementById("frontCameraBtn"),rearCameraBtn=document.getElementById("rearCameraBtn"),uploadPhotoBtn=document.getElementById("uploadPhotoBtn"),photoFileInput=document.getElementById("photoFileInput"),cameraStatus=document.getElementById("cameraStatus"),freeWriting=document.getElementById("freeWriting"),writingCounter=document.getElementById("writingCounter");
+const cameraBtn=document.getElementById("cameraBtn"),cameraVideo=document.getElementById("cameraVideo"),capturedPhoto=document.getElementById("capturedPhoto"),photoCanvas=document.getElementById("photoCanvas"),photoPlaceholder=document.getElementById("photoPlaceholder"),cameraActions=document.getElementById("cameraActions"),takePhotoBtn=document.getElementById("takePhotoBtn"),retakeBtn=document.getElementById("retakeBtn"),closeCameraBtn=document.getElementById("closeCameraBtn"),frontCameraBtn=document.getElementById("frontCameraBtn"),rearCameraBtn=document.getElementById("rearCameraBtn"),uploadPhotoBtn=document.getElementById("uploadPhotoBtn"),photoFileInput=document.getElementById("photoFileInput"),cameraStatus=document.getElementById("cameraStatus"),writingCounter=document.getElementById("writingCounter");
 
 function stopCamera(){if(cameraStream){cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null}cameraVideo.srcObject=null}
 async function startCamera(){stopCamera();if(!navigator.mediaDevices?.getUserMedia){cameraStatus.textContent="Camera is not supported in this browser.";return}try{cameraStatus.textContent="Opening camera…";cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:cameraFacing}},audio:false});cameraVideo.srcObject=cameraStream;cameraVideo.style.display="block";capturedPhoto.style.display="none";photoPlaceholder.style.display="none";cameraActions.style.display="flex";takePhotoBtn.style.display="inline-block";retakeBtn.style.display="none";closeCameraBtn.style.display="inline-block";cameraStatus.textContent="Camera ready. Click Take Photo."}catch(e){cameraStatus.textContent="Please allow camera access and try again.";photoPlaceholder.style.display="block"}}
@@ -190,12 +168,45 @@ async function switchCamera(facing){cameraFacing=facing;updateFacingButtons();if
 frontCameraBtn.onclick=()=>switchCamera("user");rearCameraBtn.onclick=()=>switchCamera("environment");cameraBtn.onclick=startCamera;takePhotoBtn.onclick=takePhoto;retakeBtn.onclick=startCamera;closeCameraBtn.onclick=()=>{stopCamera();cameraVideo.style.display="none";photoPlaceholder.style.display=capturedPhoto.src?"none":"block";cameraActions.style.display="none";cameraStatus.textContent=""};window.addEventListener("pagehide",stopCamera);
 
 function wordsOf(text){return text.trim()?text.trim().split(/\s+/):[]}
-function enforceWritingLimit(){let value=freeWriting.value.replace(/\r/g,"");let lines=value.split("\n");if(lines.length>5){lines=lines.slice(0,5);value=lines.join("\n")}let words=wordsOf(value);if(words.length>50){let count=0;value=value.replace(/\S+/g,m=>{count++;return count<=50?m:""}).replace(/[ \t]+(?=\n|$)/g,"").replace(/ {2,}/g," ");words=wordsOf(value)}if(freeWriting.value!==value)freeWriting.value=value;lines=value.split("\n");const lineCount=value.length?lines.length:1;writingCounter.textContent=`${words.length} / 50 words • ${lineCount} / 5 lines`;writingCounter.classList.toggle("writing-warning",words.length>=50||lineCount>=5)}
-freeWriting.addEventListener("input",enforceWritingLimit);enforceWritingLimit();
-
-document.getElementById("resetBtn").onclick=()=>{clearPhoto();freeWriting.value="";enforceWritingLimit()};
+const writingInputs=[...document.querySelectorAll(".writing-line")];
+const infoInputs=[...document.querySelectorAll(".info-field input")];
+const writingMessage=document.getElementById("writingMessage");
+function writingText(){return writingInputs.map(input=>input.value.trim()).filter(Boolean).join("\n")}
+function enforceWritingLimit(changed){
+ let total=wordsOf(writingText()).length;
+ if(total>50&&changed){
+  let excess=total-50;
+  const pieces=changed.value.match(/\S+|\s+/g)||[];
+  for(let i=pieces.length-1;i>=0&&excess>0;i--){if(/\S/.test(pieces[i])){pieces.splice(i,1);excess--}}
+  changed.value=pieces.join("").trimEnd();total=wordsOf(writingText()).length;
+  writingMessage.textContent="Maximum 50 words. / 50語までです。";
+ }else{writingMessage.textContent=""}
+ const used=writingInputs.filter(input=>input.value.trim()).length;
+ writingCounter.textContent=`${total} / 50 words • ${used} / 5 sentences`;
+ writingCounter.classList.toggle("writing-warning",total>=50||used>=5);
+}
+writingInputs.forEach((input,i)=>{
+ input.addEventListener("input",()=>enforceWritingLimit(input));
+ input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();if(i<writingInputs.length-1)writingInputs[i+1].focus()}});
+ input.addEventListener("paste",e=>{const text=e.clipboardData?.getData("text")||"";if(text.includes("\n")){e.preventDefault();const parts=text.split(/\r?\n/);let index=i;for(const part of parts){if(index>=writingInputs.length)break;writingInputs[index].value=part.trim();index++}enforceWritingLimit(writingInputs[Math.min(index-1,4)])}});
+});
+enforceWritingLimit();
+document.getElementById("resetBtn").onclick=()=>{
+ if(!confirm("Clear the photo, character information, and all sentences? / すべて消しますか？"))return;
+ clearPhoto();infoInputs.forEach(x=>x.value="");writingInputs.forEach(x=>x.value="");enforceWritingLimit();
+};
 const presentation=document.getElementById("presentation");
-function openPresentation(){const text=freeWriting.value.trim();const photo=capturedPhoto.getAttribute("src");const pic=document.getElementById("presentPhoto");pic.hidden=!photo;if(photo)pic.src=photo;else pic.removeAttribute("src");document.getElementById("presentPhotoPlaceholder").hidden=!!photo;document.getElementById("presentName").textContent="Character Introduction";const info=document.getElementById("presentInfo");info.replaceChildren();const lines=text?text.split("\n").filter(x=>x.trim()):["Write your introduction first!"];lines.forEach(t=>{const line=document.createElement("div");line.className="present-line";line.textContent=t;info.appendChild(line)});presentation.classList.add("show");document.body.style.overflow="hidden";if(presentation.requestFullscreen)presentation.requestFullscreen().catch(()=>{})}
+function openPresentation(){
+ const photo=capturedPhoto.getAttribute("src");const pic=document.getElementById("presentPhoto");
+ pic.hidden=!photo;if(photo)pic.src=photo;else pic.removeAttribute("src");
+ document.getElementById("presentPhotoPlaceholder").hidden=!!photo;
+ document.getElementById("presentName").textContent=document.getElementById("field-name").value.trim()||"Character Introduction";
+ const info=document.getElementById("presentInfo");info.replaceChildren();
+ const lines=writingInputs.map(x=>x.value.trim()).filter(Boolean);
+ (lines.length?lines:["Write your introduction first!"]).forEach(t=>{const line=document.createElement("div");line.className="present-line";line.textContent=t;info.appendChild(line)});
+ presentation.classList.add("show");document.body.style.overflow="hidden";
+ if(presentation.requestFullscreen)presentation.requestFullscreen().catch(()=>{});
+}
 function closePresentation(){if(document.fullscreenElement===presentation)document.exitFullscreen().catch(()=>{});presentation.classList.remove("show");document.body.style.overflow=""}
 document.getElementById("presentBtn").addEventListener("click",openPresentation);document.getElementById("editPresentation").addEventListener("click",closePresentation);document.getElementById("fullScreenPresentation").addEventListener("click",()=>{if(document.fullscreenElement===presentation)document.exitFullscreen().catch(()=>{});else presentation.requestFullscreen?.().catch(()=>{})});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&presentation.classList.contains("show"))closePresentation()});
 </script>
