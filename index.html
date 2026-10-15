@@ -119,17 +119,12 @@ header{background:#286b69;color:white;text-align:center;padding:13px 18px;font-s
     <input id="photoFileInput" type="file" accept="image/*" hidden>
   </div>
   <div class="camera-status" id="cameraStatus"></div>
-
-  <section class="character-information"><h2>📝 Character Information</h2><p class="writing-help">Choose the information you want to use. / 書きたい情報を選びましょう。</p><label class="info-field"><span><strong>Name</strong><small>名前</small></span><input id="field-name" type="text" autocomplete="off" placeholder="Write here..."></label>
-<label class="info-field"><span><strong>Job / Occupation</strong><small>職業</small></span><input id="field-job" type="text" autocomplete="off" placeholder="Write here..."></label>
-<label class="info-field"><span><strong>Country / Hometown / Other Information</strong><small>出身国・出身地・その他の情報</small></span><input id="field-origin" type="text" autocomplete="off" placeholder="Write here..."></label>
-<label class="info-field"><span><strong>Characteristics</strong><small>特徴</small></span><input id="field-traits" type="text" autocomplete="off" placeholder="Write here..."></label>
-<label class="info-field"><span><strong>Other Information</strong><small>その他の情報</small></span><input id="field-other" type="text" autocomplete="off" placeholder="Write here..."></label></section>
-<div class="free-writing"><h2>✏️ Write Your Introduction</h2><div class="writing-help">One sentence per line. Maximum 50 words.</div><div id="writingLines"><label class="sentence-entry"><span>1.</span><input class="writing-line" type="text" aria-label="Sentence 1" autocomplete="off" placeholder=""></label>
+<div class="free-writing"><h2>✏️ Write Your Introduction</h2><div class="writing-help">One sentence per line. Maximum 50 words, 6 sentences.</div><div id="writingLines"><label class="sentence-entry"><span>1.</span><input class="writing-line" type="text" aria-label="Sentence 1" autocomplete="off" placeholder=""></label>
 <label class="sentence-entry"><span>2.</span><input class="writing-line" type="text" aria-label="Sentence 2" autocomplete="off" placeholder=""></label>
 <label class="sentence-entry"><span>3.</span><input class="writing-line" type="text" aria-label="Sentence 3" autocomplete="off" placeholder=""></label>
 <label class="sentence-entry"><span>4.</span><input class="writing-line" type="text" aria-label="Sentence 4" autocomplete="off" placeholder=""></label>
-<label class="sentence-entry"><span>5.</span><input class="writing-line" type="text" aria-label="Sentence 5" autocomplete="off" placeholder=""></label></div><div class="writing-counter" id="writingCounter">0 / 50 words • 0 / 5 sentences</div><div class="writing-message" id="writingMessage" role="status"></div></div>
+<label class="sentence-entry"><span>5.</span><input class="writing-line" type="text" aria-label="Sentence 5" autocomplete="off" placeholder=""></label>
+<label class="sentence-entry"><span>6.</span><input class="writing-line" type="text" aria-label="Sentence 6" autocomplete="off" placeholder=""></label></div><div class="writing-counter" id="writingCounter">0 / 50 words • 0 / 6 sentences</div><div class="writing-message" id="writingMessage" role="status"></div></div>
   <button class="reset" id="resetBtn">🔄 Reset</button>
   <button class="present-btn" id="presentBtn" type="button">🌈 Save &amp; Present</button>
 </section>
@@ -169,7 +164,6 @@ frontCameraBtn.onclick=()=>switchCamera("user");rearCameraBtn.onclick=()=>switch
 
 function wordsOf(text){return text.trim()?text.trim().split(/\s+/):[]}
 const writingInputs=[...document.querySelectorAll(".writing-line")];
-const infoInputs=[...document.querySelectorAll(".info-field input")];
 const writingMessage=document.getElementById("writingMessage");
 function writingText(){return writingInputs.map(input=>input.value.trim()).filter(Boolean).join("\n")}
 function enforceWritingLimit(changed){
@@ -182,25 +176,25 @@ function enforceWritingLimit(changed){
   writingMessage.textContent="Maximum 50 words. / 50語までです。";
  }else{writingMessage.textContent=""}
  const used=writingInputs.filter(input=>input.value.trim()).length;
- writingCounter.textContent=`${total} / 50 words • ${used} / 5 sentences`;
+ writingCounter.textContent=`${total} / 50 words • ${used} / 6 sentences`;
  writingCounter.classList.toggle("writing-warning",total>=50||used>=5);
 }
 writingInputs.forEach((input,i)=>{
  input.addEventListener("input",()=>enforceWritingLimit(input));
  input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();if(i<writingInputs.length-1)writingInputs[i+1].focus()}});
- input.addEventListener("paste",e=>{const text=e.clipboardData?.getData("text")||"";if(text.includes("\n")){e.preventDefault();const parts=text.split(/\r?\n/);let index=i;for(const part of parts){if(index>=writingInputs.length)break;writingInputs[index].value=part.trim();index++}enforceWritingLimit(writingInputs[Math.min(index-1,4)])}});
+ input.addEventListener("paste",e=>{const text=e.clipboardData?.getData("text")||"";if(text.includes("\n")){e.preventDefault();const parts=text.split(/\r?\n/);let index=i;for(const part of parts){if(index>=writingInputs.length)break;writingInputs[index].value=part.trim();index++}enforceWritingLimit(writingInputs[Math.min(index-1,writingInputs.length-1)])}});
 });
 enforceWritingLimit();
 document.getElementById("resetBtn").onclick=()=>{
  if(!confirm("Clear the photo, character information, and all sentences? / すべて消しますか？"))return;
- clearPhoto();infoInputs.forEach(x=>x.value="");writingInputs.forEach(x=>x.value="");enforceWritingLimit();
+ clearPhoto();writingInputs.forEach(x=>x.value="");enforceWritingLimit();
 };
 const presentation=document.getElementById("presentation");
 function openPresentation(){
  const photo=capturedPhoto.getAttribute("src");const pic=document.getElementById("presentPhoto");
  pic.hidden=!photo;if(photo)pic.src=photo;else pic.removeAttribute("src");
  document.getElementById("presentPhotoPlaceholder").hidden=!!photo;
- document.getElementById("presentName").textContent=document.getElementById("field-name").value.trim()||"Character Introduction";
+ document.getElementById("presentName").textContent="Character Introduction";
  const info=document.getElementById("presentInfo");info.replaceChildren();
  const lines=writingInputs.map(x=>x.value.trim()).filter(Boolean);
  (lines.length?lines:["Write your introduction first!"]).forEach(t=>{const line=document.createElement("div");line.className="present-line";line.textContent=t;info.appendChild(line)});
