@@ -95,9 +95,47 @@ header{background:#286b69;color:white;text-align:center;padding:13px 18px;font-s
 .vocab-item span{font-size:13px;color:#586c6b;text-align:right}
 @media(max-width:650px){.info-field{grid-template-columns:1fr;gap:3px}.reference-grid{grid-template-columns:1fr}.vocab-section:last-child{grid-column:auto}.vocab-list{grid-template-columns:1fr}.writing-line{font-size:17px}.sentence-entry{gap:5px}}
 </style>
+
+<style>
+#studentWelcome{position:fixed;inset:0;z-index:300;background:#eaf4f3;display:flex;align-items:center;justify-content:center;padding:18px}
+#studentWelcome[hidden]{display:none}
+.welcome-card{background:white;width:min(440px,100%);padding:28px;border-radius:22px;box-shadow:0 12px 40px #0002;text-align:center}
+.welcome-card label{display:block;text-align:left;margin-top:15px;font-weight:bold}
+.welcome-card input,.welcome-card select,.portal-login input{width:100%;padding:12px;margin-top:5px;border:2px solid #aaccca;border-radius:10px;font:17px inherit}
+.primary-action{background:#286b69;color:white;border:0;border-radius:11px;padding:12px 18px;font:bold 17px inherit;cursor:pointer}
+#studentWelcome .primary-action{width:100%;margin-top:20px}
+#profileBar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#d9f2ed;padding:10px 18px}
+#profileBar button{border:1px solid #286b69;border-radius:9px;padding:7px 12px;background:white;cursor:pointer}
+#sendTeacherBtn{background:#ffd166!important}
+#teacherPortal{position:fixed;inset:0;z-index:400;background:#eaf4f3;overflow:auto;padding:18px;display:none}
+#teacherPortal.show{display:block}
+.portal-shell{max-width:1050px;margin:auto;background:white;border-radius:18px;padding:22px}
+.portal-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.portal-login{max-width:430px;margin:24px auto}
+.portal-login input{display:block;margin:10px 0}
+.portal-table{width:100%;border-collapse:collapse;margin-top:18px}
+.portal-table th,.portal-table td{padding:10px;text-align:left;border-bottom:1px solid #ddd}
+.portal-table button{margin:2px;padding:7px;border-radius:7px;border:1px solid #aaa;background:white;cursor:pointer}
+.portal-settings{margin-top:20px;padding:14px;background:#f5f7f7;border-radius:12px}
+#portalPreview{background:#f9fff0;border:4px solid #42c8fa;border-radius:20px;padding:20px;margin-top:14px}
+#portalPreview img{max-width:350px;max-height:250px;object-fit:contain}
+#portalPreview p{font-size:20px;overflow-wrap:anywhere}
+@media(max-width:600px){.portal-table{font-size:12px}.portal-table th,.portal-table td{padding:5px}}
+</style>
 </head>
 <body>
 <header>👤 Character Introduction</header>
+
+<div id="studentWelcome" hidden>
+ <form class="welcome-card" id="welcomeForm">
+  <h1>👋 Welcome!</h1><p>Character Introduction / キャラクター紹介</p>
+  <label>Name / 名前<input id="studentName" maxlength="60" required autocomplete="name" placeholder="Your name"></label>
+  <label>Grade / 学年<select id="studentGrade" required><option value="">Choose grade</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select></label>
+  <label>Class / 組<select id="studentClass" required><option value="">Choose class</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="Other">Other</option></select></label>
+  <button class="primary-action" type="submit">Start / スタート</button>
+ </form>
+</div>
+<div id="profileBar"><span id="profileSummary"></span><span><button id="changeProfileBtn" type="button">✏️ Change Profile</button> <button id="openTeacherBtn" type="button">🔒 Teacher Portal</button></span></div>
 <main class="app">
 <section class="panel left-panel">
   <div class="photo-box">
@@ -135,7 +173,7 @@ header{background:#286b69;color:white;text-align:center;padding:13px 18px;font-s
 
 <!-- Presentation is a separate view; original controls and selections stay untouched. -->
 <div class="presentation" id="presentation" role="dialog" aria-label="Character presentation" aria-modal="true">
-  <div class="present-toolbar"><button id="editPresentation" type="button">✏️ Edit</button><button id="fullScreenPresentation" type="button">⛶ Full Screen</button></div>
+  <div class="present-toolbar"><button id="editPresentation" type="button">✏️ Edit</button><button id="sendTeacherBtn" type="button">📨 Send to Teacher</button><button id="fullScreenPresentation" type="button">⛶ Full Screen</button></div>
   <div class="present-layout">
     <div class="present-photo-frame">
       <span class="present-decoration one">🌟</span><span class="present-decoration two">✨</span><span class="present-decoration three">⭐</span><span class="present-decoration four">💫</span>
@@ -147,6 +185,356 @@ header{background:#286b69;color:white;text-align:center;padding:13px 18px;font-s
   </div>
 </div>
 
+
+<section id="teacherPortal" aria-label="Teacher Portal">
+ <div class="portal-shell">
+  <div class="portal-head"><h2>🔒 Teacher Portal</h2><button id="closePortalBtn" type="button">✕ Close</button></div>
+  <div id="portalLogin" class="portal-login">
+   <p>Sign in with your teacher email and password.</p>
+   <input id="teacherEmail" type="email" placeholder="Teacher email" autocomplete="username">
+   <input id="teacherPassword" type="password" placeholder="Password" autocomplete="current-password">
+   <button id="teacherLoginBtn" class="primary-action" type="button">Sign In</button>
+  </div>
+  <div id="portalContent" hidden>
+   <p id="portalCount"></p>
+   <button id="refreshPortalBtn" type="button">↻ Refresh</button>
+   <button id="teacherLogoutBtn" type="button">Log Out</button>
+   <div style="overflow-x:auto"><table class="portal-table"><thead><tr><th>Student</th><th>Grade</th><th>Class</th><th>Sent</th><th>Status</th><th>Actions</th></tr></thead><tbody id="submissionRows"></tbody></table></div>
+   <div id="portalPreview" hidden></div>
+   <details class="portal-settings"><summary>⚙️ Teacher Settings — Delete Old Submissions</summary>
+    <p>Permanent deletion. Both teachers share this list. Please download or otherwise preserve records you need before deleting.</p>
+    <label>School year <input id="deleteYear" type="text" placeholder="e.g. 2026" maxlength="4" inputmode="numeric"></label>
+    <button id="deleteYearBtn" type="button">Delete submissions from this school year</button>
+   </details>
+  </div>
+  <p id="portalMessage" role="status"></p>
+ </div>
+</section>
+<script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js">
+// Student profile: stored only on this browser.
+const PROFILE_KEY="pino-character-student-profile-v1";
+let studentProfile=null;
+try{studentProfile=JSON.parse(localStorage.getItem(PROFILE_KEY)||"null")}catch(_){}
+const welcome=document.getElementById("studentWelcome");
+function showWelcome(){welcome.hidden=false; if(studentProfile){document.getElementById("studentName").value=studentProfile.name||"";document.getElementById("studentGrade").value=studentProfile.grade||"";document.getElementById("studentClass").value=studentProfile.className||""}}
+function updateProfileBar(){document.getElementById("profileSummary").textContent=studentProfile?`${studentProfile.name} • Grade ${studentProfile.grade} • Class ${studentProfile.className}`:""}
+document.getElementById("welcomeForm").addEventListener("submit",e=>{e.preventDefault();studentProfile={name:document.getElementById("studentName").value.trim(),grade:document.getElementById("studentGrade").value,className:document.getElementById("studentClass").value};if(!studentProfile.name)return;localStorage.setItem(PROFILE_KEY,JSON.stringify(studentProfile));welcome.hidden=true;updateProfileBar()});
+document.getElementById("changeProfileBtn").onclick=showWelcome;
+if(!studentProfile?.name||!studentProfile?.grade||!studentProfile?.className)showWelcome();else updateProfileBar();
+
+const firebaseConfig={
+ apiKey:"AIzaSyDW5t-1OpH5NMYxu2k47LbleFVttEhE8YM",
+ authDomain:"character-introduction.firebaseapp.com",
+ databaseURL:"https://character-introduction-default-rtdb.asia-southeast1.firebasedatabase.app",
+ projectId:"character-introduction",
+ storageBucket:"character-introduction.firebasestorage.app",
+ messagingSenderId:"77465434334",
+ appId:"1:77465434334:web:4bbea7846ca59b9b1baa4f"
+};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(),db=firebase.database();
+let teacherSession=false,submissionCache={};
+function showPortalMessage(msg){document.getElementById("portalMessage").textContent=msg}
+function setPortalState(isTeacher){teacherSession=isTeacher;document.getElementById("portalLogin").hidden=isTeacher;document.getElementById("portalContent").hidden=!isTeacher}
+async function ensureAnonymous(){
+ if(auth.currentUser && auth.currentUser.isAnonymous)return auth.currentUser;
+ if(auth.currentUser && !auth.currentUser.isAnonymous)throw Error("Please log out of the Teacher Portal before submitting.");
+ const result=await auth.signInAnonymously();return result.user;
+}
+function resizedPhoto(){
+ const src=capturedPhoto.getAttribute("src");if(!src)return "";
+ const canvas=document.createElement("canvas"),max=650;
+ const w=capturedPhoto.naturalWidth||650,h=capturedPhoto.naturalHeight||500;
+ const scale=Math.min(1,max/Math.max(w,h));canvas.width=Math.max(1,Math.round(w*scale));canvas.height=Math.max(1,Math.round(h*scale));
+ canvas.getContext("2d").drawImage(capturedPhoto,0,0,canvas.width,canvas.height);
+ return canvas.toDataURL("image/jpeg",.65);
+}
+document.getElementById("sendTeacherBtn").onclick=async()=>{
+ const button=document.getElementById("sendTeacherBtn");
+ if(!studentProfile?.name){showWelcome();return}
+ const lines=writingInputs.map(i=>i.value.trim());
+ if(!lines.some(Boolean)){alert("Please write your introduction first.");return}
+ if(!confirm(`Send this introduction to both teachers?\nStudent: ${studentProfile.name}`))return;
+ button.disabled=true;button.textContent="Sending...";
+ try{
+  const user=await ensureAnonymous();
+  const photo=resizedPhoto();
+  if(photo.length>500000)throw Error("Photo is too large. Please use a smaller image.");
+  const now=new Date();
+  const data={studentName:studentProfile.name,grade:studentProfile.grade,className:studentProfile.className,schoolYear:String(now.getMonth()>=3?now.getFullYear():now.getFullYear()-1),sentences:lines,photo,studentUid:user.uid,status:"New",createdAt:firebase.database.ServerValue.TIMESTAMP};
+  await db.ref("submissions").push(data);
+  alert("Sent to Teacher! / 先生に送りました！");
+ }catch(err){alert("Could not send. "+err.message+"\nPlease check the Firebase rules before using this feature.")}
+ finally{button.disabled=false;button.textContent="📨 Send to Teacher"}
+};
+document.getElementById("openTeacherBtn").onclick=()=>{document.getElementById("teacherPortal").classList.add("show");document.getElementById("portalPreview").hidden=true;showPortalMessage("");if(teacherSession)loadSubmissions()};
+document.getElementById("closePortalBtn").onclick=()=>document.getElementById("teacherPortal").classList.remove("show");
+document.getElementById("teacherLoginBtn").onclick=async()=>{
+ const email=document.getElementById("teacherEmail").value.trim(),password=document.getElementById("teacherPassword").value;
+ try{
+  if(auth.currentUser?.isAnonymous)await auth.signOut();
+  const credential=await auth.signInWithEmailAndPassword(email,password);
+  const profile=await db.ref("teachers/"+credential.user.uid).once("value");
+  if(!profile.exists())throw Error("This account is not authorized as a teacher.");
+  setPortalState(true);document.getElementById("teacherPassword").value="";showPortalMessage("");await loadSubmissions();
+ }catch(err){setPortalState(false);showPortalMessage(err.message);if(auth.currentUser&&!auth.currentUser.isAnonymous)await auth.signOut()}
+};
+document.getElementById("teacherLogoutBtn").onclick=async()=>{await auth.signOut();setPortalState(false);submissionCache={};document.getElementById("submissionRows").replaceChildren();document.getElementById("portalPreview").hidden=true;showPortalMessage("Signed out.")};
+async function loadSubmissions(){
+ if(!teacherSession)return;
+ try{
+  const snapshot=await db.ref("submissions").once("value");submissionCache=snapshot.val()||{};
+  const rows=document.getElementById("submissionRows");rows.replaceChildren();
+  const entries=Object.entries(submissionCache).sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0));
+  document.getElementById("portalCount").textContent=`${entries.length} submissions • ${entries.filter(([k,v])=>v.status!=="Reviewed").length} new`;
+  for(const [id,submission] of entries){
+   const tr=document.createElement("tr");
+   const date=submission.createdAt?new Date(submission.createdAt).toLocaleString():"—";
+   for(const val of [submission.studentName,submission.grade,submission.className,date,submission.status||"New"]){const td=document.createElement("td");td.textContent=val||"—";tr.appendChild(td)}
+   const td=document.createElement("td");
+   const view=document.createElement("button");view.textContent="View";view.onclick=()=>showSubmission(submission);
+   const review=document.createElement("button");review.textContent=submission.status==="Reviewed"?"✓ Reviewed":"Mark Reviewed";review.disabled=submission.status==="Reviewed";review.onclick=async()=>{try{await db.ref("submissions/"+id+"/status").set("Reviewed");await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
+   const del=document.createElement("button");del.textContent="Delete";del.onclick=async()=>{if(!confirm(`Permanently delete ${submission.studentName}'s submission?`))return;try{await db.ref("submissions/"+id).remove();await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
+   td.append(view,review,del);tr.appendChild(td);rows.appendChild(tr);
+  }
+ }catch(err){showPortalMessage("Could not load submissions: "+err.message)}
+}
+function showSubmission(data){
+ const panel=document.getElementById("portalPreview");panel.replaceChildren();panel.hidden=false;
+ const title=document.createElement("h3");title.textContent=`${data.studentName} — Grade ${data.grade}, Class ${data.className}`;panel.appendChild(title);
+ if(data.photo){const img=document.createElement("img");img.src=data.photo;img.alt="Submitted character photo";panel.appendChild(img)}
+ for(const sentence of data.sentences||[]){if(!sentence)continue;const p=document.createElement("p");p.textContent=sentence;panel.appendChild(p)}
+ panel.scrollIntoView({behavior:"smooth",block:"start"});
+}
+document.getElementById("refreshPortalBtn").onclick=loadSubmissions;
+document.getElementById("deleteYearBtn").onclick=async()=>{
+ const year=document.getElementById("deleteYear").value.trim();
+ if(!/^\d{4}$/.test(year)){alert("Enter a four-digit school year.");return}
+ const matches=Object.entries(submissionCache).filter(([id,v])=>v.schoolYear===year);
+ if(!matches.length){alert("No submissions for this school year.");return}
+ if(!confirm(`Permanently delete ${matches.length} submissions for school year ${year}?`))return;
+ const typed=prompt(`Type DELETE ${year} to confirm permanent deletion:`);
+ if(typed!==`DELETE ${year}`)return;
+ try{const updates={};for(const [id] of matches)updates[id]=null;await db.ref("submissions").update(updates);await loadSubmissions();showPortalMessage(`Deleted ${matches.length} submissions for ${year}.`)}catch(err){showPortalMessage(err.message)}
+};
+
+</script><script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js">
+// Student profile: stored only on this browser.
+const PROFILE_KEY="pino-character-student-profile-v1";
+let studentProfile=null;
+try{studentProfile=JSON.parse(localStorage.getItem(PROFILE_KEY)||"null")}catch(_){}
+const welcome=document.getElementById("studentWelcome");
+function showWelcome(){welcome.hidden=false; if(studentProfile){document.getElementById("studentName").value=studentProfile.name||"";document.getElementById("studentGrade").value=studentProfile.grade||"";document.getElementById("studentClass").value=studentProfile.className||""}}
+function updateProfileBar(){document.getElementById("profileSummary").textContent=studentProfile?`${studentProfile.name} • Grade ${studentProfile.grade} • Class ${studentProfile.className}`:""}
+document.getElementById("welcomeForm").addEventListener("submit",e=>{e.preventDefault();studentProfile={name:document.getElementById("studentName").value.trim(),grade:document.getElementById("studentGrade").value,className:document.getElementById("studentClass").value};if(!studentProfile.name)return;localStorage.setItem(PROFILE_KEY,JSON.stringify(studentProfile));welcome.hidden=true;updateProfileBar()});
+document.getElementById("changeProfileBtn").onclick=showWelcome;
+if(!studentProfile?.name||!studentProfile?.grade||!studentProfile?.className)showWelcome();else updateProfileBar();
+
+const firebaseConfig={
+ apiKey:"AIzaSyDW5t-1OpH5NMYxu2k47LbleFVttEhE8YM",
+ authDomain:"character-introduction.firebaseapp.com",
+ databaseURL:"https://character-introduction-default-rtdb.asia-southeast1.firebasedatabase.app",
+ projectId:"character-introduction",
+ storageBucket:"character-introduction.firebasestorage.app",
+ messagingSenderId:"77465434334",
+ appId:"1:77465434334:web:4bbea7846ca59b9b1baa4f"
+};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(),db=firebase.database();
+let teacherSession=false,submissionCache={};
+function showPortalMessage(msg){document.getElementById("portalMessage").textContent=msg}
+function setPortalState(isTeacher){teacherSession=isTeacher;document.getElementById("portalLogin").hidden=isTeacher;document.getElementById("portalContent").hidden=!isTeacher}
+async function ensureAnonymous(){
+ if(auth.currentUser && auth.currentUser.isAnonymous)return auth.currentUser;
+ if(auth.currentUser && !auth.currentUser.isAnonymous)throw Error("Please log out of the Teacher Portal before submitting.");
+ const result=await auth.signInAnonymously();return result.user;
+}
+function resizedPhoto(){
+ const src=capturedPhoto.getAttribute("src");if(!src)return "";
+ const canvas=document.createElement("canvas"),max=650;
+ const w=capturedPhoto.naturalWidth||650,h=capturedPhoto.naturalHeight||500;
+ const scale=Math.min(1,max/Math.max(w,h));canvas.width=Math.max(1,Math.round(w*scale));canvas.height=Math.max(1,Math.round(h*scale));
+ canvas.getContext("2d").drawImage(capturedPhoto,0,0,canvas.width,canvas.height);
+ return canvas.toDataURL("image/jpeg",.65);
+}
+document.getElementById("sendTeacherBtn").onclick=async()=>{
+ const button=document.getElementById("sendTeacherBtn");
+ if(!studentProfile?.name){showWelcome();return}
+ const lines=writingInputs.map(i=>i.value.trim());
+ if(!lines.some(Boolean)){alert("Please write your introduction first.");return}
+ if(!confirm(`Send this introduction to both teachers?\nStudent: ${studentProfile.name}`))return;
+ button.disabled=true;button.textContent="Sending...";
+ try{
+  const user=await ensureAnonymous();
+  const photo=resizedPhoto();
+  if(photo.length>500000)throw Error("Photo is too large. Please use a smaller image.");
+  const now=new Date();
+  const data={studentName:studentProfile.name,grade:studentProfile.grade,className:studentProfile.className,schoolYear:String(now.getMonth()>=3?now.getFullYear():now.getFullYear()-1),sentences:lines,photo,studentUid:user.uid,status:"New",createdAt:firebase.database.ServerValue.TIMESTAMP};
+  await db.ref("submissions").push(data);
+  alert("Sent to Teacher! / 先生に送りました！");
+ }catch(err){alert("Could not send. "+err.message+"\nPlease check the Firebase rules before using this feature.")}
+ finally{button.disabled=false;button.textContent="📨 Send to Teacher"}
+};
+document.getElementById("openTeacherBtn").onclick=()=>{document.getElementById("teacherPortal").classList.add("show");document.getElementById("portalPreview").hidden=true;showPortalMessage("");if(teacherSession)loadSubmissions()};
+document.getElementById("closePortalBtn").onclick=()=>document.getElementById("teacherPortal").classList.remove("show");
+document.getElementById("teacherLoginBtn").onclick=async()=>{
+ const email=document.getElementById("teacherEmail").value.trim(),password=document.getElementById("teacherPassword").value;
+ try{
+  if(auth.currentUser?.isAnonymous)await auth.signOut();
+  const credential=await auth.signInWithEmailAndPassword(email,password);
+  const profile=await db.ref("teachers/"+credential.user.uid).once("value");
+  if(!profile.exists())throw Error("This account is not authorized as a teacher.");
+  setPortalState(true);document.getElementById("teacherPassword").value="";showPortalMessage("");await loadSubmissions();
+ }catch(err){setPortalState(false);showPortalMessage(err.message);if(auth.currentUser&&!auth.currentUser.isAnonymous)await auth.signOut()}
+};
+document.getElementById("teacherLogoutBtn").onclick=async()=>{await auth.signOut();setPortalState(false);submissionCache={};document.getElementById("submissionRows").replaceChildren();document.getElementById("portalPreview").hidden=true;showPortalMessage("Signed out.")};
+async function loadSubmissions(){
+ if(!teacherSession)return;
+ try{
+  const snapshot=await db.ref("submissions").once("value");submissionCache=snapshot.val()||{};
+  const rows=document.getElementById("submissionRows");rows.replaceChildren();
+  const entries=Object.entries(submissionCache).sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0));
+  document.getElementById("portalCount").textContent=`${entries.length} submissions • ${entries.filter(([k,v])=>v.status!=="Reviewed").length} new`;
+  for(const [id,submission] of entries){
+   const tr=document.createElement("tr");
+   const date=submission.createdAt?new Date(submission.createdAt).toLocaleString():"—";
+   for(const val of [submission.studentName,submission.grade,submission.className,date,submission.status||"New"]){const td=document.createElement("td");td.textContent=val||"—";tr.appendChild(td)}
+   const td=document.createElement("td");
+   const view=document.createElement("button");view.textContent="View";view.onclick=()=>showSubmission(submission);
+   const review=document.createElement("button");review.textContent=submission.status==="Reviewed"?"✓ Reviewed":"Mark Reviewed";review.disabled=submission.status==="Reviewed";review.onclick=async()=>{try{await db.ref("submissions/"+id+"/status").set("Reviewed");await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
+   const del=document.createElement("button");del.textContent="Delete";del.onclick=async()=>{if(!confirm(`Permanently delete ${submission.studentName}'s submission?`))return;try{await db.ref("submissions/"+id).remove();await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
+   td.append(view,review,del);tr.appendChild(td);rows.appendChild(tr);
+  }
+ }catch(err){showPortalMessage("Could not load submissions: "+err.message)}
+}
+function showSubmission(data){
+ const panel=document.getElementById("portalPreview");panel.replaceChildren();panel.hidden=false;
+ const title=document.createElement("h3");title.textContent=`${data.studentName} — Grade ${data.grade}, Class ${data.className}`;panel.appendChild(title);
+ if(data.photo){const img=document.createElement("img");img.src=data.photo;img.alt="Submitted character photo";panel.appendChild(img)}
+ for(const sentence of data.sentences||[]){if(!sentence)continue;const p=document.createElement("p");p.textContent=sentence;panel.appendChild(p)}
+ panel.scrollIntoView({behavior:"smooth",block:"start"});
+}
+document.getElementById("refreshPortalBtn").onclick=loadSubmissions;
+document.getElementById("deleteYearBtn").onclick=async()=>{
+ const year=document.getElementById("deleteYear").value.trim();
+ if(!/^\d{4}$/.test(year)){alert("Enter a four-digit school year.");return}
+ const matches=Object.entries(submissionCache).filter(([id,v])=>v.schoolYear===year);
+ if(!matches.length){alert("No submissions for this school year.");return}
+ if(!confirm(`Permanently delete ${matches.length} submissions for school year ${year}?`))return;
+ const typed=prompt(`Type DELETE ${year} to confirm permanent deletion:`);
+ if(typed!==`DELETE ${year}`)return;
+ try{const updates={};for(const [id] of matches)updates[id]=null;await db.ref("submissions").update(updates);await loadSubmissions();showPortalMessage(`Deleted ${matches.length} submissions for ${year}.`)}catch(err){showPortalMessage(err.message)}
+};
+
+</script><script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js">
+// Student profile: stored only on this browser.
+const PROFILE_KEY="pino-character-student-profile-v1";
+let studentProfile=null;
+try{studentProfile=JSON.parse(localStorage.getItem(PROFILE_KEY)||"null")}catch(_){}
+const welcome=document.getElementById("studentWelcome");
+function showWelcome(){welcome.hidden=false; if(studentProfile){document.getElementById("studentName").value=studentProfile.name||"";document.getElementById("studentGrade").value=studentProfile.grade||"";document.getElementById("studentClass").value=studentProfile.className||""}}
+function updateProfileBar(){document.getElementById("profileSummary").textContent=studentProfile?`${studentProfile.name} • Grade ${studentProfile.grade} • Class ${studentProfile.className}`:""}
+document.getElementById("welcomeForm").addEventListener("submit",e=>{e.preventDefault();studentProfile={name:document.getElementById("studentName").value.trim(),grade:document.getElementById("studentGrade").value,className:document.getElementById("studentClass").value};if(!studentProfile.name)return;localStorage.setItem(PROFILE_KEY,JSON.stringify(studentProfile));welcome.hidden=true;updateProfileBar()});
+document.getElementById("changeProfileBtn").onclick=showWelcome;
+if(!studentProfile?.name||!studentProfile?.grade||!studentProfile?.className)showWelcome();else updateProfileBar();
+
+const firebaseConfig={
+ apiKey:"AIzaSyDW5t-1OpH5NMYxu2k47LbleFVttEhE8YM",
+ authDomain:"character-introduction.firebaseapp.com",
+ databaseURL:"https://character-introduction-default-rtdb.asia-southeast1.firebasedatabase.app",
+ projectId:"character-introduction",
+ storageBucket:"character-introduction.firebasestorage.app",
+ messagingSenderId:"77465434334",
+ appId:"1:77465434334:web:4bbea7846ca59b9b1baa4f"
+};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(),db=firebase.database();
+let teacherSession=false,submissionCache={};
+function showPortalMessage(msg){document.getElementById("portalMessage").textContent=msg}
+function setPortalState(isTeacher){teacherSession=isTeacher;document.getElementById("portalLogin").hidden=isTeacher;document.getElementById("portalContent").hidden=!isTeacher}
+async function ensureAnonymous(){
+ if(auth.currentUser && auth.currentUser.isAnonymous)return auth.currentUser;
+ if(auth.currentUser && !auth.currentUser.isAnonymous)throw Error("Please log out of the Teacher Portal before submitting.");
+ const result=await auth.signInAnonymously();return result.user;
+}
+function resizedPhoto(){
+ const src=capturedPhoto.getAttribute("src");if(!src)return "";
+ const canvas=document.createElement("canvas"),max=650;
+ const w=capturedPhoto.naturalWidth||650,h=capturedPhoto.naturalHeight||500;
+ const scale=Math.min(1,max/Math.max(w,h));canvas.width=Math.max(1,Math.round(w*scale));canvas.height=Math.max(1,Math.round(h*scale));
+ canvas.getContext("2d").drawImage(capturedPhoto,0,0,canvas.width,canvas.height);
+ return canvas.toDataURL("image/jpeg",.65);
+}
+document.getElementById("sendTeacherBtn").onclick=async()=>{
+ const button=document.getElementById("sendTeacherBtn");
+ if(!studentProfile?.name){showWelcome();return}
+ const lines=writingInputs.map(i=>i.value.trim());
+ if(!lines.some(Boolean)){alert("Please write your introduction first.");return}
+ if(!confirm(`Send this introduction to both teachers?\nStudent: ${studentProfile.name}`))return;
+ button.disabled=true;button.textContent="Sending...";
+ try{
+  const user=await ensureAnonymous();
+  const photo=resizedPhoto();
+  if(photo.length>500000)throw Error("Photo is too large. Please use a smaller image.");
+  const now=new Date();
+  const data={studentName:studentProfile.name,grade:studentProfile.grade,className:studentProfile.className,schoolYear:String(now.getMonth()>=3?now.getFullYear():now.getFullYear()-1),sentences:lines,photo,studentUid:user.uid,status:"New",createdAt:firebase.database.ServerValue.TIMESTAMP};
+  await db.ref("submissions").push(data);
+  alert("Sent to Teacher! / 先生に送りました！");
+ }catch(err){alert("Could not send. "+err.message+"\nPlease check the Firebase rules before using this feature.")}
+ finally{button.disabled=false;button.textContent="📨 Send to Teacher"}
+};
+document.getElementById("openTeacherBtn").onclick=()=>{document.getElementById("teacherPortal").classList.add("show");document.getElementById("portalPreview").hidden=true;showPortalMessage("");if(teacherSession)loadSubmissions()};
+document.getElementById("closePortalBtn").onclick=()=>document.getElementById("teacherPortal").classList.remove("show");
+document.getElementById("teacherLoginBtn").onclick=async()=>{
+ const email=document.getElementById("teacherEmail").value.trim(),password=document.getElementById("teacherPassword").value;
+ try{
+  if(auth.currentUser?.isAnonymous)await auth.signOut();
+  const credential=await auth.signInWithEmailAndPassword(email,password);
+  const profile=await db.ref("teachers/"+credential.user.uid).once("value");
+  if(!profile.exists())throw Error("This account is not authorized as a teacher.");
+  setPortalState(true);document.getElementById("teacherPassword").value="";showPortalMessage("");await loadSubmissions();
+ }catch(err){setPortalState(false);showPortalMessage(err.message);if(auth.currentUser&&!auth.currentUser.isAnonymous)await auth.signOut()}
+};
+document.getElementById("teacherLogoutBtn").onclick=async()=>{await auth.signOut();setPortalState(false);submissionCache={};document.getElementById("submissionRows").replaceChildren();document.getElementById("portalPreview").hidden=true;showPortalMessage("Signed out.")};
+async function loadSubmissions(){
+ if(!teacherSession)return;
+ try{
+  const snapshot=await db.ref("submissions").once("value");submissionCache=snapshot.val()||{};
+  const rows=document.getElementById("submissionRows");rows.replaceChildren();
+  const entries=Object.entries(submissionCache).sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0));
+  document.getElementById("portalCount").textContent=`${entries.length} submissions • ${entries.filter(([k,v])=>v.status!=="Reviewed").length} new`;
+  for(const [id,submission] of entries){
+   const tr=document.createElement("tr");
+   const date=submission.createdAt?new Date(submission.createdAt).toLocaleString():"—";
+   for(const val of [submission.studentName,submission.grade,submission.className,date,submission.status||"New"]){const td=document.createElement("td");td.textContent=val||"—";tr.appendChild(td)}
+   const td=document.createElement("td");
+   const view=document.createElement("button");view.textContent="View";view.onclick=()=>showSubmission(submission);
+   const review=document.createElement("button");review.textContent=submission.status==="Reviewed"?"✓ Reviewed":"Mark Reviewed";review.disabled=submission.status==="Reviewed";review.onclick=async()=>{try{await db.ref("submissions/"+id+"/status").set("Reviewed");await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
+   const del=document.createElement("button");del.textContent="Delete";del.onclick=async()=>{if(!confirm(`Permanently delete ${submission.studentName}'s submission?`))return;try{await db.ref("submissions/"+id).remove();await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
+   td.append(view,review,del);tr.appendChild(td);rows.appendChild(tr);
+  }
+ }catch(err){showPortalMessage("Could not load submissions: "+err.message)}
+}
+function showSubmission(data){
+ const panel=document.getElementById("portalPreview");panel.replaceChildren();panel.hidden=false;
+ const title=document.createElement("h3");title.textContent=`${data.studentName} — Grade ${data.grade}, Class ${data.className}`;panel.appendChild(title);
+ if(data.photo){const img=document.createElement("img");img.src=data.photo;img.alt="Submitted character photo";panel.appendChild(img)}
+ for(const sentence of data.sentences||[]){if(!sentence)continue;const p=document.createElement("p");p.textContent=sentence;panel.appendChild(p)}
+ panel.scrollIntoView({behavior:"smooth",block:"start"});
+}
+document.getElementById("refreshPortalBtn").onclick=loadSubmissions;
+document.getElementById("deleteYearBtn").onclick=async()=>{
+ const year=document.getElementById("deleteYear").value.trim();
+ if(!/^\d{4}$/.test(year)){alert("Enter a four-digit school year.");return}
+ const matches=Object.entries(submissionCache).filter(([id,v])=>v.schoolYear===year);
+ if(!matches.length){alert("No submissions for this school year.");return}
+ if(!confirm(`Permanently delete ${matches.length} submissions for school year ${year}?`))return;
+ const typed=prompt(`Type DELETE ${year} to confirm permanent deletion:`);
+ if(typed!==`DELETE ${year}`)return;
+ try{const updates={};for(const [id] of matches)updates[id]=null;await db.ref("submissions").update(updates);await loadSubmissions();showPortalMessage(`Deleted ${matches.length} submissions for ${year}.`)}catch(err){showPortalMessage(err.message)}
+};
+
+</script>
 <script>
 let cameraStream=null;
 let cameraFacing="user";
@@ -203,6 +591,114 @@ function openPresentation(){
 }
 function closePresentation(){if(document.fullscreenElement===presentation)document.exitFullscreen().catch(()=>{});presentation.classList.remove("show");document.body.style.overflow=""}
 document.getElementById("presentBtn").addEventListener("click",openPresentation);document.getElementById("editPresentation").addEventListener("click",closePresentation);document.getElementById("fullScreenPresentation").addEventListener("click",()=>{if(document.fullscreenElement===presentation)document.exitFullscreen().catch(()=>{});else presentation.requestFullscreen?.().catch(()=>{})});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&presentation.classList.contains("show"))closePresentation()});
+
+// Student profile: stored only on this browser.
+const PROFILE_KEY="pino-character-student-profile-v1";
+let studentProfile=null;
+try{studentProfile=JSON.parse(localStorage.getItem(PROFILE_KEY)||"null")}catch(_){}
+const welcome=document.getElementById("studentWelcome");
+function showWelcome(){welcome.hidden=false; if(studentProfile){document.getElementById("studentName").value=studentProfile.name||"";document.getElementById("studentGrade").value=studentProfile.grade||"";document.getElementById("studentClass").value=studentProfile.className||""}}
+function updateProfileBar(){document.getElementById("profileSummary").textContent=studentProfile?`${studentProfile.name} • Grade ${studentProfile.grade} • Class ${studentProfile.className}`:""}
+document.getElementById("welcomeForm").addEventListener("submit",e=>{e.preventDefault();studentProfile={name:document.getElementById("studentName").value.trim(),grade:document.getElementById("studentGrade").value,className:document.getElementById("studentClass").value};if(!studentProfile.name)return;localStorage.setItem(PROFILE_KEY,JSON.stringify(studentProfile));welcome.hidden=true;updateProfileBar()});
+document.getElementById("changeProfileBtn").onclick=showWelcome;
+if(!studentProfile?.name||!studentProfile?.grade||!studentProfile?.className)showWelcome();else updateProfileBar();
+
+const firebaseConfig={
+ apiKey:"AIzaSyDW5t-1OpH5NMYxu2k47LbleFVttEhE8YM",
+ authDomain:"character-introduction.firebaseapp.com",
+ databaseURL:"https://character-introduction-default-rtdb.asia-southeast1.firebasedatabase.app",
+ projectId:"character-introduction",
+ storageBucket:"character-introduction.firebasestorage.app",
+ messagingSenderId:"77465434334",
+ appId:"1:77465434334:web:4bbea7846ca59b9b1baa4f"
+};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(),db=firebase.database();
+let teacherSession=false,submissionCache={};
+function showPortalMessage(msg){document.getElementById("portalMessage").textContent=msg}
+function setPortalState(isTeacher){teacherSession=isTeacher;document.getElementById("portalLogin").hidden=isTeacher;document.getElementById("portalContent").hidden=!isTeacher}
+async function ensureAnonymous(){
+ if(auth.currentUser && auth.currentUser.isAnonymous)return auth.currentUser;
+ if(auth.currentUser && !auth.currentUser.isAnonymous)throw Error("Please log out of the Teacher Portal before submitting.");
+ const result=await auth.signInAnonymously();return result.user;
+}
+function resizedPhoto(){
+ const src=capturedPhoto.getAttribute("src");if(!src)return "";
+ const canvas=document.createElement("canvas"),max=650;
+ const w=capturedPhoto.naturalWidth||650,h=capturedPhoto.naturalHeight||500;
+ const scale=Math.min(1,max/Math.max(w,h));canvas.width=Math.max(1,Math.round(w*scale));canvas.height=Math.max(1,Math.round(h*scale));
+ canvas.getContext("2d").drawImage(capturedPhoto,0,0,canvas.width,canvas.height);
+ return canvas.toDataURL("image/jpeg",.65);
+}
+document.getElementById("sendTeacherBtn").onclick=async()=>{
+ const button=document.getElementById("sendTeacherBtn");
+ if(!studentProfile?.name){showWelcome();return}
+ const lines=writingInputs.map(i=>i.value.trim());
+ if(!lines.some(Boolean)){alert("Please write your introduction first.");return}
+ if(!confirm(`Send this introduction to both teachers?\nStudent: ${studentProfile.name}`))return;
+ button.disabled=true;button.textContent="Sending...";
+ try{
+  const user=await ensureAnonymous();
+  const photo=resizedPhoto();
+  if(photo.length>500000)throw Error("Photo is too large. Please use a smaller image.");
+  const now=new Date();
+  const data={studentName:studentProfile.name,grade:studentProfile.grade,className:studentProfile.className,schoolYear:String(now.getMonth()>=3?now.getFullYear():now.getFullYear()-1),sentences:lines,photo,studentUid:user.uid,status:"New",createdAt:firebase.database.ServerValue.TIMESTAMP};
+  await db.ref("submissions").push(data);
+  alert("Sent to Teacher! / 先生に送りました！");
+ }catch(err){alert("Could not send. "+err.message+"\nPlease check the Firebase rules before using this feature.")}
+ finally{button.disabled=false;button.textContent="📨 Send to Teacher"}
+};
+document.getElementById("openTeacherBtn").onclick=()=>{document.getElementById("teacherPortal").classList.add("show");document.getElementById("portalPreview").hidden=true;showPortalMessage("");if(teacherSession)loadSubmissions()};
+document.getElementById("closePortalBtn").onclick=()=>document.getElementById("teacherPortal").classList.remove("show");
+document.getElementById("teacherLoginBtn").onclick=async()=>{
+ const email=document.getElementById("teacherEmail").value.trim(),password=document.getElementById("teacherPassword").value;
+ try{
+  if(auth.currentUser?.isAnonymous)await auth.signOut();
+  const credential=await auth.signInWithEmailAndPassword(email,password);
+  const profile=await db.ref("teachers/"+credential.user.uid).once("value");
+  if(!profile.exists())throw Error("This account is not authorized as a teacher.");
+  setPortalState(true);document.getElementById("teacherPassword").value="";showPortalMessage("");await loadSubmissions();
+ }catch(err){setPortalState(false);showPortalMessage(err.message);if(auth.currentUser&&!auth.currentUser.isAnonymous)await auth.signOut()}
+};
+document.getElementById("teacherLogoutBtn").onclick=async()=>{await auth.signOut();setPortalState(false);submissionCache={};document.getElementById("submissionRows").replaceChildren();document.getElementById("portalPreview").hidden=true;showPortalMessage("Signed out.")};
+async function loadSubmissions(){
+ if(!teacherSession)return;
+ try{
+  const snapshot=await db.ref("submissions").once("value");submissionCache=snapshot.val()||{};
+  const rows=document.getElementById("submissionRows");rows.replaceChildren();
+  const entries=Object.entries(submissionCache).sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0));
+  document.getElementById("portalCount").textContent=`${entries.length} submissions • ${entries.filter(([k,v])=>v.status!=="Reviewed").length} new`;
+  for(const [id,submission] of entries){
+   const tr=document.createElement("tr");
+   const date=submission.createdAt?new Date(submission.createdAt).toLocaleString():"—";
+   for(const val of [submission.studentName,submission.grade,submission.className,date,submission.status||"New"]){const td=document.createElement("td");td.textContent=val||"—";tr.appendChild(td)}
+   const td=document.createElement("td");
+   const view=document.createElement("button");view.textContent="View";view.onclick=()=>showSubmission(submission);
+   const review=document.createElement("button");review.textContent=submission.status==="Reviewed"?"✓ Reviewed":"Mark Reviewed";review.disabled=submission.status==="Reviewed";review.onclick=async()=>{try{await db.ref("submissions/"+id+"/status").set("Reviewed");await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
+   const del=document.createElement("button");del.textContent="Delete";del.onclick=async()=>{if(!confirm(`Permanently delete ${submission.studentName}'s submission?`))return;try{await db.ref("submissions/"+id).remove();await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
+   td.append(view,review,del);tr.appendChild(td);rows.appendChild(tr);
+  }
+ }catch(err){showPortalMessage("Could not load submissions: "+err.message)}
+}
+function showSubmission(data){
+ const panel=document.getElementById("portalPreview");panel.replaceChildren();panel.hidden=false;
+ const title=document.createElement("h3");title.textContent=`${data.studentName} — Grade ${data.grade}, Class ${data.className}`;panel.appendChild(title);
+ if(data.photo){const img=document.createElement("img");img.src=data.photo;img.alt="Submitted character photo";panel.appendChild(img)}
+ for(const sentence of data.sentences||[]){if(!sentence)continue;const p=document.createElement("p");p.textContent=sentence;panel.appendChild(p)}
+ panel.scrollIntoView({behavior:"smooth",block:"start"});
+}
+document.getElementById("refreshPortalBtn").onclick=loadSubmissions;
+document.getElementById("deleteYearBtn").onclick=async()=>{
+ const year=document.getElementById("deleteYear").value.trim();
+ if(!/^\d{4}$/.test(year)){alert("Enter a four-digit school year.");return}
+ const matches=Object.entries(submissionCache).filter(([id,v])=>v.schoolYear===year);
+ if(!matches.length){alert("No submissions for this school year.");return}
+ if(!confirm(`Permanently delete ${matches.length} submissions for school year ${year}?`))return;
+ const typed=prompt(`Type DELETE ${year} to confirm permanent deletion:`);
+ if(typed!==`DELETE ${year}`)return;
+ try{const updates={};for(const [id] of matches)updates[id]=null;await db.ref("submissions").update(updates);await loadSubmissions();showPortalMessage(`Deleted ${matches.length} submissions for ${year}.`)}catch(err){showPortalMessage(err.message)}
+};
+
 </script>
 </body>
 </html>
