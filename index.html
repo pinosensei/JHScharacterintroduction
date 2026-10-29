@@ -139,6 +139,26 @@ header{background:#286b69;color:white;text-align:center;padding:13px 18px;font-s
 .portal-present-line:nth-child(2){border-color:#ff82b0;background:#fff7fb}.portal-present-line:nth-child(3){border-color:#61d9f1}.portal-present-line:nth-child(4){border-color:#ffcc59;background:#fffdf4}
 @media(max-width:760px){.portal-present-layout{grid-template-columns:1fr}.portal-present-photo-frame{min-height:300px}.portal-present-line{min-height:70px}}
 </style>
+<style>
+/* Teacher feedback worksheet */
+#portalPreview{background:#fff;border:1px solid #d9e5e4;border-radius:14px;padding:22px}
+.feedback-photo{max-width:260px;max-height:200px;object-fit:contain;border-radius:10px;border:1px solid #ddd;margin:10px 0}
+.feedback-row{border-bottom:1px solid #c8d7d5;padding:14px 0;display:grid;grid-template-columns:32px minmax(0,1fr);gap:10px}
+.feedback-number{font-weight:800;color:#286b69;font-size:20px}
+.feedback-original{font-size:19px;overflow-wrap:anywhere;white-space:pre-wrap;margin-bottom:9px}
+.feedback-controls{display:flex;gap:12px;flex-wrap:wrap;margin:8px 0}
+.feedback-controls label{font-size:14px;cursor:pointer}
+.feedback-fields{display:grid;gap:8px;margin-top:9px}
+.feedback-fields label{font-size:13px;color:#3d5e5c;font-weight:700}
+.feedback-fields input,.feedback-fields textarea{display:block;width:100%;border:1px solid #b6cdca;border-radius:8px;padding:10px;font:15px 'Trebuchet MS',sans-serif;margin-top:4px}
+.feedback-save{margin-top:18px}
+#studentFeedbackPanel{position:fixed;inset:0;z-index:350;background:#eaf4f3;overflow:auto;padding:18px;display:none}
+#studentFeedbackPanel.show{display:block}
+.feedback-shell{max-width:900px;margin:auto;background:white;border-radius:18px;padding:22px}
+.feedback-card{border:1px solid #d9e5e4;border-radius:12px;padding:17px;margin:15px 0}
+.feedback-correct{color:#176b42;font-weight:700}.feedback-needs{color:#a63c3c;font-weight:700}
+.feedback-card p{overflow-wrap:anywhere}
+</style>
 </head>
 <body>
 <header>👤 Character Introduction</header>
@@ -152,7 +172,7 @@ header{background:#286b69;color:white;text-align:center;padding:13px 18px;font-s
   <button class="primary-action" type="submit">Start / スタート</button>
  </form>
 </div>
-<div id="profileBar"><span id="profileSummary"></span><span><button id="changeProfileBtn" type="button">✏️ Change Profile</button> <button id="openTeacherBtn" type="button">🔒 Teacher Portal</button></span></div>
+<div id="profileBar"><span id="profileSummary"></span><span><button id="changeProfileBtn" type="button">✏️ Change Profile</button> <button id="myFeedbackBtn" type="button">📝 My Teacher Feedback / 先生からのコメント</button> <button id="openTeacherBtn" type="button">🔒 Teacher Portal</button></span></div>
 <main class="app">
 <section class="panel left-panel">
   <div class="photo-box">
@@ -203,6 +223,7 @@ header{background:#286b69;color:white;text-align:center;padding:13px 18px;font-s
 </div>
 
 
+<section id="studentFeedbackPanel" aria-label="My Teacher Feedback"><div class="feedback-shell"><div class="portal-head"><h2>📝 My Teacher Feedback / 先生からのコメント</h2><button id="closeFeedbackBtn" type="button">✕ Close</button></div><p id="studentFeedbackMessage" role="status"></p><div id="studentFeedbackList"></div></div></section>
 <section id="teacherPortal" aria-label="Teacher Portal">
  <div class="portal-shell">
   <div class="portal-head"><h2>🔒 Teacher Portal</h2><button id="closePortalBtn" type="button">✕ Close</button></div>
@@ -679,6 +700,7 @@ document.getElementById("teacherLoginBtn").onclick=async()=>{
 };
 document.getElementById("teacherLogoutBtn").onclick=async()=>{await auth.signOut();setPortalState(false);submissionCache={};document.getElementById("submissionRows").replaceChildren();document.getElementById("portalPreview").hidden=true;showPortalMessage("Signed out.")};
 let openSubmissionId=null;
+let feedbackLoadingToken=0;
 async function loadSubmissions(){
  if(!teacherSession)return;
  try{
@@ -696,7 +718,7 @@ async function loadSubmissions(){
    view.setAttribute("aria-expanded",String(openSubmissionId===id));
    view.onclick=()=>{
     if(openSubmissionId===id){openSubmissionId=null;hideSubmission()}
-    else{openSubmissionId=id;showSubmission(submission)}
+    else{openSubmissionId=id;showSubmission(submission,id)}
     rows.querySelectorAll('button[data-preview-id]').forEach(b=>{const selected=b.dataset.previewId===openSubmissionId;b.textContent=selected?'Hide':'View';b.setAttribute('aria-expanded',String(selected))});
    };
    view.dataset.previewId=id;
@@ -704,27 +726,85 @@ async function loadSubmissions(){
    const del=document.createElement("button");del.textContent="Delete";del.onclick=async()=>{if(!confirm(`Permanently delete ${submission.studentName}'s submission?`))return;try{await db.ref("submissions/"+id).remove();await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
    td.append(view,review,del);tr.appendChild(td);rows.appendChild(tr);
   }
-  if(openSubmissionId)showSubmission(submissionCache[openSubmissionId],false);else hideSubmission();
+  if(openSubmissionId)showSubmission(submissionCache[openSubmissionId],openSubmissionId,false);else hideSubmission();
  }catch(err){showPortalMessage("Could not load submissions: "+err.message)}
 }
-function hideSubmission(){const panel=document.getElementById("portalPreview");panel.hidden=true;panel.replaceChildren()}
-function showSubmission(data,scroll=true){
- const panel=document.getElementById("portalPreview");panel.replaceChildren();panel.hidden=false;
- const heading=document.createElement("div");heading.className="portal-preview-heading";
- const title=document.createElement("h3");title.textContent=`${data.studentName} — Grade ${data.grade}, Class ${data.className}`;
- const close=document.createElement("button");close.type="button";close.textContent="✕ Hide preview";close.onclick=()=>{openSubmissionId=null;hideSubmission();document.querySelectorAll('#submissionRows button[data-preview-id]').forEach(b=>{b.textContent='View';b.setAttribute('aria-expanded','false')})};
- heading.append(title,close);panel.appendChild(heading);
- const layout=document.createElement("div");layout.className="portal-present-layout";
- const photoFrame=document.createElement("div");photoFrame.className="portal-present-photo-frame";
- for(const [symbol,klass] of [['🌟','one'],['✨','two'],['⭐','three'],['💫','four']]){const deco=document.createElement('span');deco.className='portal-present-decoration '+klass;deco.textContent=symbol;photoFrame.appendChild(deco)}
- if(data.photo){const img=document.createElement("img");img.src=data.photo;img.alt="Submitted character photo";img.className="portal-present-photo";photoFrame.appendChild(img)}else{const placeholder=document.createElement('div');placeholder.className='portal-present-photo-placeholder';placeholder.textContent='📷 No photo submitted';photoFrame.appendChild(placeholder)}
- const name=document.createElement('div');name.className='portal-present-name';name.textContent='Character Introduction';photoFrame.appendChild(name);
- const lines=document.createElement("div");lines.className="portal-present-info";
- const sentences=Array.isArray(data.sentences)?data.sentences:Object.values(data.sentences||{});
- for(let i=0;i<6;i++){const line=document.createElement("div");line.className="portal-present-line";line.textContent=sentences[i]||" ";lines.appendChild(line)}
- layout.append(photoFrame,lines);panel.appendChild(layout);
- if(scroll)panel.scrollIntoView({behavior:"smooth",block:"start"});
+function hideSubmission(){feedbackLoadingToken++;const panel=document.getElementById("portalPreview");panel.hidden=true;panel.replaceChildren()}
+function feedbackSentences(data){
+ const raw=data.sentences||[];
+ return Array.from({length:6},(_,i)=>Array.isArray(raw)?(raw[i]||''):(raw[i]||''));
 }
+function addElement(parent,tag,content,cls){const el=document.createElement(tag);if(content!==undefined)el.textContent=content;if(cls)el.className=cls;parent.appendChild(el);return el}
+async function showSubmission(data,id,scroll=true){
+ const token=++feedbackLoadingToken;
+ const panel=document.getElementById('portalPreview');panel.replaceChildren();panel.hidden=false;
+ const heading=addElement(panel,'div',undefined,'portal-preview-heading');
+ addElement(heading,'h3',`${data.studentName} — Grade ${data.grade}, Class ${data.className}`);
+ const close=addElement(heading,'button','✕ Hide preview');close.type='button';close.onclick=()=>{openSubmissionId=null;hideSubmission();document.querySelectorAll('#submissionRows button[data-preview-id]').forEach(b=>{b.textContent='View';b.setAttribute('aria-expanded','false')})};
+ if(data.photo){const img=addElement(panel,'img');img.src=data.photo;img.alt='Submitted character photo';img.className='feedback-photo'}
+ addElement(panel,'h3','Student Writing / 生徒の作文');
+ const rows=[];const sentences=feedbackSentences(data);
+ for(let i=0;i<6;i++){
+  const row=addElement(panel,'div',undefined,'feedback-row');addElement(row,'span',`${i+1}.`,'feedback-number');
+  const body=addElement(row,'div');addElement(body,'div',sentences[i]||'—','feedback-original');
+  const radios=addElement(body,'div',undefined,'feedback-controls');const group=`mark-${id}-${i}`;
+  for(const [value,label] of [['unchecked','Not checked'],['correct','✓ Correct'],['needsCorrection','✗ Needs correction']]){
+   const lab=addElement(radios,'label');const radio=addElement(lab,'input');radio.type='radio';radio.name=group;radio.value=value;if(value==='unchecked')radio.checked=true;lab.append(' '+label);
+  }
+  const fields=addElement(body,'div',undefined,'feedback-fields');
+  const correctionLabel=addElement(fields,'label','Corrected sentence / 正しい文');const correction=addElement(correctionLabel,'input');correction.type='text';correction.maxLength=500;correction.placeholder='Write the corrected sentence (if needed)';
+  const commentLabel=addElement(fields,'label','Teacher comment / 先生のコメント');const comment=addElement(commentLabel,'textarea');comment.rows=2;comment.maxLength=1000;comment.placeholder='Optional feedback';
+  rows.push({radios,correction,comment});
+ }
+ const save=addElement(panel,'button','💾 Save Feedback / コメントを保存','primary-action feedback-save');save.type='button';
+ const msg=addElement(panel,'p','', 'feedback-save-message');msg.setAttribute('role','status');
+ save.onclick=async()=>{
+  if(!teacherSession||!auth.currentUser||auth.currentUser.isAnonymous){msg.textContent='Please sign in as a teacher.';return}
+  if(!data.studentUid){msg.textContent='This submission has no student UID.';return}
+  const items=rows.map(({radios,correction,comment})=>({mark:radios.querySelector('input:checked').value,correction:correction.value.trim(),comment:comment.value.trim()}));
+  const payload={studentName:data.studentName,grade:String(data.grade),className:String(data.className),sentences,items,updatedAt:firebase.database.ServerValue.TIMESTAMP};
+  save.disabled=true;msg.textContent='Saving...';
+  try{await db.ref('feedback/'+data.studentUid+'/'+id).set(payload);msg.textContent='✓ Feedback saved successfully.'}
+  catch(e){msg.textContent='Could not save: '+e.message}
+  finally{save.disabled=false}
+ };
+ if(scroll)panel.scrollIntoView({behavior:'smooth',block:'start'});
+ try{
+  if(!data.studentUid)throw Error('No student UID on this submission.');
+  const snap=await db.ref('feedback/'+data.studentUid+'/'+id).once('value');
+  if(token!==feedbackLoadingToken||openSubmissionId!==id)return;
+  const existing=snap.val();if(existing&&existing.items){
+   rows.forEach((row,i)=>{const item=existing.items[i]||{};const selected=row.radios.querySelector(`input[value="${item.mark||'unchecked'}"]`);if(selected)selected.checked=true;row.correction.value=item.correction||'';row.comment.value=item.comment||''});
+   msg.textContent='Previous feedback loaded. You can edit and save again.';
+  }
+ }catch(e){if(token===feedbackLoadingToken)msg.textContent='Could not load previous feedback: '+e.message}
+}
+// Students may read only the feedback associated with their own anonymous Firebase UID.
+document.getElementById('myFeedbackBtn').onclick=async()=>{
+ const panel=document.getElementById('studentFeedbackPanel'),list=document.getElementById('studentFeedbackList'),msg=document.getElementById('studentFeedbackMessage');
+ panel.classList.add('show');list.replaceChildren();msg.textContent='Loading your feedback...';
+ try{
+  const user=await ensureAnonymous();
+  const snap=await db.ref('feedback/'+user.uid).once('value');const entries=Object.entries(snap.val()||{}).sort((a,b)=>(b[1].updatedAt||0)-(a[1].updatedAt||0));
+  msg.textContent=entries.length?`${entries.length} feedback record(s)`:'No teacher feedback yet. / 先生からのコメントはまだありません。';
+  for(const [id,data] of entries){
+   const card=addElement(list,'article',undefined,'feedback-card');
+   addElement(card,'h3',`${data.studentName||'My Introduction'} — Grade ${data.grade||'—'}, Class ${data.className||'—'}`);
+   if(data.updatedAt)addElement(card,'small','Updated: '+new Date(data.updatedAt).toLocaleString());
+   const sentences=feedbackSentences(data);
+   for(let i=0;i<6;i++){
+    const row=addElement(card,'div',undefined,'feedback-row');addElement(row,'span',`${i+1}.`,'feedback-number');const body=addElement(row,'div');addElement(body,'div',sentences[i]||'—','feedback-original');
+    const item=(data.items||{})[i]||{};
+    if(item.mark==='correct')addElement(body,'div','✓ Correct / 正しいです','feedback-correct');
+    else if(item.mark==='needsCorrection')addElement(body,'div','✗ Needs correction / 修正が必要','feedback-needs');
+    else addElement(body,'div','Not checked / 未確認');
+    if(item.correction)addElement(body,'p','Corrected sentence: '+item.correction);
+    if(item.comment)addElement(body,'p','Teacher comment: '+item.comment);
+   }
+  }
+ }catch(e){msg.textContent='Could not load feedback: '+e.message+' (Feedback is tied to this browser’s anonymous account.)'}
+};
+document.getElementById('closeFeedbackBtn').onclick=()=>document.getElementById('studentFeedbackPanel').classList.remove('show');
 document.getElementById("refreshPortalBtn").onclick=loadSubmissions;
 document.getElementById("deleteYearBtn").onclick=async()=>{
  const year=document.getElementById("deleteYear").value.trim();
