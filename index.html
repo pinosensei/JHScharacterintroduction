@@ -121,6 +121,23 @@ header{background:#286b69;color:white;text-align:center;padding:13px 18px;font-s
 #portalPreview img{max-width:350px;max-height:250px;object-fit:contain}
 #portalPreview p{font-size:20px;overflow-wrap:anywhere}
 @media(max-width:600px){.portal-table{font-size:12px}.portal-table th,.portal-table td{padding:5px}}
+
+/* Teacher Portal: presentation-style preview; does not modify student-facing presentation. */
+#portalPreview[hidden]{display:none!important}
+#portalPreview{background:#f9fff0;border:4px solid #42c8fa;border-radius:22px;padding:18px;margin-top:16px}
+.portal-preview-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:22px}
+.portal-preview-heading h3{margin:0;font-size:20px}
+.portal-preview-heading button{border:2px solid #174778;background:#fff;border-radius:10px;padding:9px 14px;font:700 15px inherit;cursor:pointer}
+.portal-present-layout{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:stretch}
+.portal-present-photo-frame{position:relative;min-height:390px;border:12px solid #16bdf0;outline:6px solid #ffe04b;outline-offset:-23px;border-radius:32px;background:#e2f8ff;box-shadow:0 0 0 5px #273e95;display:flex;flex-direction:column;padding:17px;margin:12px 5px 16px}
+#portalPreview .portal-present-photo{flex:1;min-height:0;width:100%;max-width:none;max-height:none;object-fit:contain;border-radius:16px;background:#fff}
+.portal-present-photo-placeholder{flex:1;display:grid;place-items:center;color:#567;font-size:20px;background:#fff;border-radius:16px}
+.portal-present-name{align-self:center;max-width:100%;overflow-wrap:anywhere;margin:8px 0 0;background:linear-gradient(90deg,#ffdf6c,#fff3ad,#ffcf53);border:4px solid #fff;border-radius:35px;padding:8px 18px;text-align:center;color:#172e6c;font-size:clamp(19px,2vw,34px);font-weight:900;box-shadow:0 4px 0 #1c4096}
+.portal-present-decoration{position:absolute;z-index:1;font-size:36px;pointer-events:none}.portal-present-decoration.one{top:-27px;left:-23px}.portal-present-decoration.two{top:-27px;right:-16px}.portal-present-decoration.three{bottom:5px;right:-22px}.portal-present-decoration.four{bottom:0;left:-18px}
+.portal-present-info{display:flex;flex-direction:column;gap:12px;justify-content:stretch}
+.portal-present-line{flex:1;min-height:74px;display:flex;align-items:center;background:#fff;border:4px solid #42c8fa;border-radius:26px;padding:12px 20px;font-size:clamp(18px,2.2vw,30px);font-weight:bold;color:#14245a;overflow-wrap:anywhere;box-shadow:0 3px 0 #d4f0ff}
+.portal-present-line:nth-child(2){border-color:#ff82b0;background:#fff7fb}.portal-present-line:nth-child(3){border-color:#61d9f1}.portal-present-line:nth-child(4){border-color:#ffcc59;background:#fffdf4}
+@media(max-width:760px){.portal-present-layout{grid-template-columns:1fr}.portal-present-photo-frame{min-height:300px}.portal-present-line{min-height:70px}}
 </style>
 </head>
 <body>
@@ -661,6 +678,7 @@ document.getElementById("teacherLoginBtn").onclick=async()=>{
  }catch(err){setPortalState(false);showPortalMessage(err.message);if(auth.currentUser&&!auth.currentUser.isAnonymous)await auth.signOut()}
 };
 document.getElementById("teacherLogoutBtn").onclick=async()=>{await auth.signOut();setPortalState(false);submissionCache={};document.getElementById("submissionRows").replaceChildren();document.getElementById("portalPreview").hidden=true;showPortalMessage("Signed out.")};
+let openSubmissionId=null;
 async function loadSubmissions(){
  if(!teacherSession)return;
  try{
@@ -668,24 +686,44 @@ async function loadSubmissions(){
   const rows=document.getElementById("submissionRows");rows.replaceChildren();
   const entries=Object.entries(submissionCache).sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0));
   document.getElementById("portalCount").textContent=`${entries.length} submissions • ${entries.filter(([k,v])=>v.status!=="Reviewed").length} new`;
+  if(openSubmissionId&&!submissionCache[openSubmissionId])openSubmissionId=null;
   for(const [id,submission] of entries){
    const tr=document.createElement("tr");
    const date=submission.createdAt?new Date(submission.createdAt).toLocaleString():"—";
    for(const val of [submission.studentName,submission.grade,submission.className,date,submission.status||"New"]){const td=document.createElement("td");td.textContent=val||"—";tr.appendChild(td)}
    const td=document.createElement("td");
-   const view=document.createElement("button");view.textContent="View";view.onclick=()=>showSubmission(submission);
+   const view=document.createElement("button");view.textContent=openSubmissionId===id?"Hide":"View";
+   view.setAttribute("aria-expanded",String(openSubmissionId===id));
+   view.onclick=()=>{
+    if(openSubmissionId===id){openSubmissionId=null;hideSubmission()}
+    else{openSubmissionId=id;showSubmission(submission)}
+    rows.querySelectorAll('button[data-preview-id]').forEach(b=>{const selected=b.dataset.previewId===openSubmissionId;b.textContent=selected?'Hide':'View';b.setAttribute('aria-expanded',String(selected))});
+   };
+   view.dataset.previewId=id;
    const review=document.createElement("button");review.textContent=submission.status==="Reviewed"?"✓ Reviewed":"Mark Reviewed";review.disabled=submission.status==="Reviewed";review.onclick=async()=>{try{await db.ref("submissions/"+id+"/status").set("Reviewed");await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
    const del=document.createElement("button");del.textContent="Delete";del.onclick=async()=>{if(!confirm(`Permanently delete ${submission.studentName}'s submission?`))return;try{await db.ref("submissions/"+id).remove();await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
    td.append(view,review,del);tr.appendChild(td);rows.appendChild(tr);
   }
+  if(openSubmissionId)showSubmission(submissionCache[openSubmissionId],false);else hideSubmission();
  }catch(err){showPortalMessage("Could not load submissions: "+err.message)}
 }
-function showSubmission(data){
+function hideSubmission(){const panel=document.getElementById("portalPreview");panel.hidden=true;panel.replaceChildren()}
+function showSubmission(data,scroll=true){
  const panel=document.getElementById("portalPreview");panel.replaceChildren();panel.hidden=false;
- const title=document.createElement("h3");title.textContent=`${data.studentName} — Grade ${data.grade}, Class ${data.className}`;panel.appendChild(title);
- if(data.photo){const img=document.createElement("img");img.src=data.photo;img.alt="Submitted character photo";panel.appendChild(img)}
- for(const sentence of data.sentences||[]){if(!sentence)continue;const p=document.createElement("p");p.textContent=sentence;panel.appendChild(p)}
- panel.scrollIntoView({behavior:"smooth",block:"start"});
+ const heading=document.createElement("div");heading.className="portal-preview-heading";
+ const title=document.createElement("h3");title.textContent=`${data.studentName} — Grade ${data.grade}, Class ${data.className}`;
+ const close=document.createElement("button");close.type="button";close.textContent="✕ Hide preview";close.onclick=()=>{openSubmissionId=null;hideSubmission();document.querySelectorAll('#submissionRows button[data-preview-id]').forEach(b=>{b.textContent='View';b.setAttribute('aria-expanded','false')})};
+ heading.append(title,close);panel.appendChild(heading);
+ const layout=document.createElement("div");layout.className="portal-present-layout";
+ const photoFrame=document.createElement("div");photoFrame.className="portal-present-photo-frame";
+ for(const [symbol,klass] of [['🌟','one'],['✨','two'],['⭐','three'],['💫','four']]){const deco=document.createElement('span');deco.className='portal-present-decoration '+klass;deco.textContent=symbol;photoFrame.appendChild(deco)}
+ if(data.photo){const img=document.createElement("img");img.src=data.photo;img.alt="Submitted character photo";img.className="portal-present-photo";photoFrame.appendChild(img)}else{const placeholder=document.createElement('div');placeholder.className='portal-present-photo-placeholder';placeholder.textContent='📷 No photo submitted';photoFrame.appendChild(placeholder)}
+ const name=document.createElement('div');name.className='portal-present-name';name.textContent='Character Introduction';photoFrame.appendChild(name);
+ const lines=document.createElement("div");lines.className="portal-present-info";
+ const sentences=Array.isArray(data.sentences)?data.sentences:Object.values(data.sentences||{});
+ for(let i=0;i<6;i++){const line=document.createElement("div");line.className="portal-present-line";line.textContent=sentences[i]||" ";lines.appendChild(line)}
+ layout.append(photoFrame,lines);panel.appendChild(layout);
+ if(scroll)panel.scrollIntoView({behavior:"smooth",block:"start"});
 }
 document.getElementById("refreshPortalBtn").onclick=loadSubmissions;
 document.getElementById("deleteYearBtn").onclick=async()=>{
