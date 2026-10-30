@@ -361,12 +361,23 @@ const firebaseConfig={
 };
 firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth(),db=firebase.database();
+// Teacher Portal uses its own Firebase app instance (same project, same database, same rules).
+// Signing a teacher in or out here can never sign out or replace the student's anonymous account
+// on this tablet, which is what links the student to their feedback.
+const teacherApp=firebase.initializeApp(firebaseConfig,"teacher-portal");
+const teacherAuth=teacherApp.auth(),teacherDb=teacherApp.database();
+// Teacher sign-in is kept in memory only: reloading or closing the page signs the teacher out on shared tablets.
+const teacherPersistenceReady=teacherAuth.setPersistence(firebase.auth.Auth.Persistence.NONE).catch(()=>{});
+// Resolves once Firebase has restored any saved student session from this browser.
+const studentAuthReady=new Promise(resolve=>{const stop=auth.onAuthStateChanged(()=>{stop();resolve()})});
 let teacherSession=false,submissionCache={};
 function showPortalMessage(msg){document.getElementById("portalMessage").textContent=msg}
 function setPortalState(isTeacher){teacherSession=isTeacher;document.getElementById("portalLogin").hidden=isTeacher;document.getElementById("portalContent").hidden=!isTeacher}
 async function ensureAnonymous(){
+ await studentAuthReady;
  if(auth.currentUser && auth.currentUser.isAnonymous)return auth.currentUser;
- if(auth.currentUser && !auth.currentUser.isAnonymous)throw Error("Please log out of the Teacher Portal before submitting.");
+ // Only possible if a teacher signed in here with the previous version of this page.
+ if(auth.currentUser && !auth.currentUser.isAnonymous)await auth.signOut();
  const result=await auth.signInAnonymously();return result.user;
 }
 function resizedPhoto(){
@@ -442,14 +453,14 @@ document.getElementById("closePortalBtn").onclick=()=>document.getElementById("t
 document.getElementById("teacherLoginBtn").onclick=async()=>{
  const email=document.getElementById("teacherEmail").value.trim(),password=document.getElementById("teacherPassword").value;
  try{
-  if(auth.currentUser?.isAnonymous)await auth.signOut();
-  const credential=await auth.signInWithEmailAndPassword(email,password);
-  const profile=await db.ref("teachers/"+credential.user.uid).once("value");
+  await teacherPersistenceReady;
+  const credential=await teacherAuth.signInWithEmailAndPassword(email,password);
+  const profile=await teacherDb.ref("teachers/"+credential.user.uid).once("value");
   if(!profile.exists())throw Error("This account is not authorized as a teacher.");
   setPortalState(true);document.getElementById("teacherPassword").value="";showPortalMessage("");await loadSubmissions();
- }catch(err){setPortalState(false);showPortalMessage(err.message);if(auth.currentUser&&!auth.currentUser.isAnonymous)await auth.signOut()}
+ }catch(err){setPortalState(false);showPortalMessage(err.message);if(teacherAuth.currentUser)await teacherAuth.signOut()}
 };
-document.getElementById("teacherLogoutBtn").onclick=async()=>{await auth.signOut();setPortalState(false);submissionCache={};openSubmissionId=null;renderedPreviewStamp=null;document.getElementById("submissionRows").replaceChildren();document.getElementById("portalPreview").hidden=true;showPortalMessage("Signed out.")};
+document.getElementById("teacherLogoutBtn").onclick=async()=>{await teacherAuth.signOut();setPortalState(false);submissionCache={};openSubmissionId=null;renderedPreviewStamp=null;document.getElementById("submissionRows").replaceChildren();document.getElementById("portalPreview").hidden=true;showPortalMessage("Signed out.")};
 let openSubmissionId=null;
 let renderedPreviewStamp=null;
 let feedbackLoadingToken=0;
@@ -458,7 +469,7 @@ function statusLabel(s){const st=s.status||"New";return st==="Updated"?"🔄 Upd
 async function loadSubmissions(){
  if(!teacherSession)return;
  try{
-  const snapshot=await db.ref("submissions").once("value");submissionCache=snapshot.val()||{};
+  const snapshot=await teacherDb.ref("submissions").once("value");submissionCache=snapshot.val()||{};
   const rows=document.getElementById("submissionRows");rows.replaceChildren();
   const entries=Object.entries(submissionCache).sort((a,b)=>(b[1].updatedAt||b[1].createdAt||0)-(a[1].updatedAt||a[1].createdAt||0));
   document.getElementById("portalCount").textContent=`${entries.length} submissions • ${entries.filter(([k,v])=>v.status!=="Reviewed").length} new`;
@@ -483,8 +494,8 @@ async function loadSubmissions(){
     rows.querySelectorAll('button[data-preview-id]').forEach(b=>{const selected=b.dataset.previewId===openSubmissionId;b.textContent=selected?'Hide':'View';b.setAttribute('aria-expanded',String(selected))});
    };
    view.dataset.previewId=id;
-   const review=document.createElement("button");review.textContent=submission.status==="Reviewed"?"✓ Reviewed":"Mark Reviewed";review.disabled=submission.status==="Reviewed";review.onclick=async()=>{try{await db.ref("submissions/"+id+"/status").set("Reviewed");await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
-   const del=document.createElement("button");del.textContent="Delete";del.onclick=async()=>{if(!confirm(`Permanently delete ${submission.studentName}'s submission?`))return;try{await db.ref("submissions/"+id).remove();await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
+   const review=document.createElement("button");review.textContent=submission.status==="Reviewed"?"✓ Reviewed":"Mark Reviewed";review.disabled=submission.status==="Reviewed";review.onclick=async()=>{try{await teacherDb.ref("submissions/"+id+"/status").set("Reviewed");await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
+   const del=document.createElement("button");del.textContent="Delete";del.onclick=async()=>{if(!confirm(`Permanently delete ${submission.studentName}'s submission?`))return;try{await teacherDb.ref("submissions/"+id).remove();await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
    td.append(view,review,del);tr.appendChild(td);rows.appendChild(tr);
   }
   // Re-render the open preview only if the student's work changed, so unsaved corrections are not lost on refresh.
@@ -552,7 +563,7 @@ async function showSubmission(data,id,scroll=true){
  // Feedback already in Firebase for this submission (may be for an earlier version).
  let existingFeedback=null,existingIsStale=false;
  save.onclick=async()=>{
-  if(!teacherSession||!auth.currentUser||auth.currentUser.isAnonymous){msg.textContent='Please sign in as a teacher.';return}
+  if(!teacherSession||!teacherAuth.currentUser){msg.textContent='Please sign in as a teacher.';return}
   if(!data.studentUid){msg.textContent='This submission has no student UID.';return}
   const items=rows.map(({radios,correction,comment})=>({mark:radios.querySelector('input:checked').value,correction:correction.value.trim(),comment:comment.value.trim()}));
   const payload={studentName:data.studentName,grade:String(data.grade),className:String(data.className),sentences,items,version,updatedAt:firebase.database.ServerValue.TIMESTAMP};
@@ -566,7 +577,7 @@ async function showSubmission(data,id,scroll=true){
   }
   save.disabled=true;msg.textContent='Saving...';
   try{
-   await db.ref('feedback/'+data.studentUid).update(updates);
+   await teacherDb.ref('feedback/'+data.studentUid).update(updates);
    existingFeedback={...payload,updatedAt:Date.now()};existingIsStale=false;
    msg.textContent='✓ Feedback saved successfully.'+archiveNote;
   }
@@ -576,7 +587,7 @@ async function showSubmission(data,id,scroll=true){
  if(scroll)panel.scrollIntoView({behavior:'smooth',block:'start'});
  try{
   if(!data.studentUid)throw Error('No student UID on this submission.');
-  const snap=await db.ref('feedback/'+data.studentUid+'/'+id).once('value');
+  const snap=await teacherDb.ref('feedback/'+data.studentUid+'/'+id).once('value');
   if(token!==feedbackLoadingToken||openSubmissionId!==id)return;
   const existing=snap.val();
   if(existing&&existing.items){
@@ -620,7 +631,15 @@ document.getElementById('myFeedbackBtn').onclick=async()=>{
   const user=await ensureAnonymous();
   const snap=await db.ref('feedback/'+user.uid).once('value');
   const entries=Object.entries(snap.val()||{}).sort((a,b)=>(a[1].archived?1:0)-(b[1].archived?1:0)||(b[1].updatedAt||0)-(a[1].updatedAt||0));
-  msg.textContent=entries.length?`${entries.length} feedback record(s)`:'No teacher feedback yet. / 先生からのコメントはまだありません。';
+  if(entries.length)msg.textContent=`${entries.length} feedback record(s)`;
+  else{
+   // Is this browser's account the one that sent work? (Students can read only their own record.)
+   let sentFromHere=false;
+   try{sentFromHere=(await db.ref('submissions/'+submissionKeyFor(user.uid,assignmentIdFor(currentSchoolYear()))).once('value')).exists()}catch(_){}
+   msg.textContent=sentFromHere
+    ?'No teacher feedback yet. / 先生からのコメントはまだありません。'
+    :'No feedback found for this tablet. Feedback appears only on the tablet and browser you used to send your work. / この端末にはコメントがありません。作文を送った端末とブラウザで確認してください。';
+  }
   for(const [id,data] of entries){
    const card=addElement(list,'article',undefined,'feedback-card');
    const h=addElement(card,'h3',`${data.studentName||'My Introduction'} — Grade ${data.grade||'—'}, Class ${data.className||'—'}`);
@@ -649,7 +668,7 @@ document.getElementById("deleteYearBtn").onclick=async()=>{
  if(!confirm(`Permanently delete ${matches.length} submissions for school year ${year}?`))return;
  const typed=prompt(`Type DELETE ${year} to confirm permanent deletion:`);
  if(typed!==`DELETE ${year}`)return;
- try{const updates={};for(const [id] of matches)updates[id]=null;await db.ref("submissions").update(updates);await loadSubmissions();showPortalMessage(`Deleted ${matches.length} submissions for ${year}.`)}catch(err){showPortalMessage(err.message)}
+ try{const updates={};for(const [id] of matches)updates[id]=null;await teacherDb.ref("submissions").update(updates);await loadSubmissions();showPortalMessage(`Deleted ${matches.length} submissions for ${year}.`)}catch(err){showPortalMessage(err.message)}
 };
 
 </script>
