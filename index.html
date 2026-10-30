@@ -68,12 +68,12 @@ header{background:#286b69;color:white;text-align:center;padding:13px 18px;font-s
 .present-photo-placeholder{flex:1;display:flex;align-items:center;justify-content:center;font-size:30px;color:#567}
 .present-name{align-self:center;max-width:95%;overflow-wrap:anywhere;margin:-7px 0 0;background:linear-gradient(90deg,#ffdf6c,#fff3ad,#ffcf53);border:5px solid white;border-radius:50% 50% 22px 22px;padding:8px 30px;text-align:center;color:#172e6c;font-size:clamp(25px,3.3vw,58px);font-weight:900;box-shadow:0 5px 0 #1c4096}
 .present-decoration{position:absolute;z-index:1;font-size:clamp(26px,4vw,65px);filter:drop-shadow(2px 3px 0 white);pointer-events:none}.present-decoration.one{top:-30px;left:-24px}.present-decoration.two{top:-28px;right:-16px}.present-decoration.three{bottom:5px;right:-24px}.present-decoration.four{bottom:0;left:-20px}
-.present-info{display:flex;flex-direction:column;justify-content:center;gap:clamp(10px,2vh,22px);padding:8px 0}
-.present-line{flex:1;min-height:105px;display:flex;align-items:center;gap:clamp(8px,2vw,24px);background:#fff;border:5px solid #42c8fa;border-radius:35px;padding:12px clamp(12px,2vw,32px);font-size:clamp(23px,3vw,49px);font-weight:bold;color:#14245a;box-shadow:0 4px 0 #d4f0ff}
-.present-line:nth-child(2){border-color:#ff82b0;background:#fff7fb}.present-line:nth-child(3){border-color:#61d9f1}.present-line:nth-child(4){border-color:#ffcc59;background:#fffdf4}
-.present-line img{width:clamp(65px,9vw,155px);height:clamp(65px,9vw,155px);object-fit:contain;flex-shrink:0}.present-line .word{color:#008d91}.present-line:nth-child(2) .word{color:#f33d85}.present-line:nth-child(3) .word{color:#168ed1}.present-line:nth-child(4) .word{color:#ed9a00}
+/* Sentence area: clean notebook paper (photo frame above is unchanged). */
+.present-info{display:flex;flex-direction:column;justify-content:flex-start;gap:clamp(12px,2.4vh,28px);margin:15px 0 20px;padding:clamp(18px,3vh,40px) clamp(16px,2.6vw,44px);background:#fff;border:1px solid #dbe7f0;border-radius:6px;box-shadow:0 6px 18px #0000000f;min-width:0}
+/* Each wrapped row of a sentence sits on its own thin light-blue rule. */
+.present-line{display:block;margin:0;padding:0 4px;font-size:clamp(22px,2.7vw,44px);line-height:1.65em;font-weight:600;color:#1b2a4a;overflow-wrap:break-word;word-break:normal;hyphens:none;background-image:linear-gradient(to bottom,transparent calc(100% - 2px),#b9dcf4 calc(100% - 2px));background-size:100% 1.65em;background-repeat:repeat-y}
 .present-line[hidden]{display:none}
-@media(max-width:800px){.present-layout{grid-template-columns:1fr;gap:12px}.present-photo-frame{min-height:300px;max-height:60vh}.present-info{gap:12px}.present-line{min-height:90px;font-size:clamp(23px,5vw,38px)}.presentation{padding:12px}}
+@media(max-width:800px){.present-layout{grid-template-columns:1fr;gap:12px}.present-photo-frame{min-height:300px;max-height:60vh}.present-info{gap:14px;margin:4px 0 12px}.present-line{font-size:clamp(20px,5.2vw,34px)}.presentation{padding:12px}}
 
 /* Character-information worksheet */
 .character-information,.free-writing{max-width:920px;margin:22px auto 0}
@@ -158,6 +158,39 @@ header{background:#286b69;color:white;text-align:center;padding:13px 18px;font-s
 .feedback-card{border:1px solid #d9e5e4;border-radius:12px;padding:17px;margin:15px 0}
 .feedback-correct{color:#176b42;font-weight:700}.feedback-needs{color:#a63c3c;font-weight:700}
 .feedback-card p{overflow-wrap:anywhere}
+</style>
+<style>
+/* Teacher Portal: compact, collapsible sentence corrections (worksheet look). */
+.fb-list{border-top:1px solid #d5e1df;margin-top:6px}
+.fb-item{border-bottom:1px solid #d5e1df}
+.fb-toggle{display:grid;grid-template-columns:30px minmax(0,1fr) 22px 20px;align-items:center;gap:10px;width:100%;min-height:52px;padding:10px 6px;border:0;background:#fff;text-align:left;font:18px/1.45 "Trebuchet MS",sans-serif;color:#1f2b2a;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.fb-toggle:hover{background:#f6faf9}
+.fb-toggle:focus-visible{outline:2px solid #286b69;outline-offset:-2px}
+.fb-num{font-weight:700;color:#286b69}
+.fb-text{overflow-wrap:anywhere;white-space:pre-wrap}
+.fb-text.empty{color:#9aa9a7}
+.fb-mark{font-weight:700;text-align:center;font-size:17px}
+.fb-mark.correct{color:#1f7a4c}.fb-mark.needs{color:#b23b3b}
+.fb-chevron{color:#7a8c8a;font-size:14px;transition:transform .2s ease;text-align:center}
+.fb-item.open .fb-chevron{transform:rotate(90deg)}
+.fb-panel{display:grid;grid-template-rows:0fr;transition:grid-template-rows .22s ease}
+.fb-item.open .fb-panel{grid-template-rows:1fr}
+.fb-panel-inner{overflow:hidden;min-height:0}
+.fb-panel-body{padding:4px 8px 16px 46px;display:grid;gap:10px}
+#portalPreview .fb-panel-body .fb-label{font-size:13px;font-weight:700;color:#3d5e5c;margin:0}
+.fb-radios{display:flex;gap:6px 16px;flex-wrap:wrap}
+.fb-radios label{font-size:15px;cursor:pointer;display:flex;align-items:center;gap:5px;min-height:34px}
+.fb-panel-body input[type=text],.fb-panel-body textarea{display:block;width:100%;border:1px solid #c3d4d1;border-radius:6px;padding:9px 10px;font:15px "Trebuchet MS",sans-serif;margin-top:4px;background:#fff}
+.fb-earlier{background:#f7f8f8;border-left:3px solid #c9d3d2;padding:8px 10px;font-size:14px;color:#46595b;overflow-wrap:anywhere}
+.fb-earlier strong{display:block;font-size:12px;color:#6a7a79;margin-bottom:3px}
+.fb-notice{background:#fff8e6;border:1px solid #f0d58a;border-radius:8px;padding:10px 12px;font-size:14px;margin:10px 0;color:#5c4a12}
+.fb-notice details{margin-top:6px}.fb-notice summary{cursor:pointer;font-weight:700}
+.fb-notice ol{margin:6px 0 0;padding-left:22px}
+.status-updated{color:#9a5b00;font-weight:700}
+.legacy-tag{display:inline-block;font-size:11px;color:#6a7a79;border:1px solid #ccd6d5;border-radius:5px;padding:1px 5px;margin-left:4px}
+.feedback-earlier-tag{display:inline-block;font-size:12px;color:#6a5a2a;background:#fff3cf;border-radius:6px;padding:2px 7px;margin-left:6px}
+@media(prefers-reduced-motion:reduce){.fb-panel,.fb-chevron{transition:none}}
+@media(max-width:600px){.fb-toggle{font-size:16px;grid-template-columns:24px minmax(0,1fr) 20px 16px;gap:8px}.fb-panel-body{padding-left:10px}}
 </style>
 </head>
 <body>
@@ -248,331 +281,7 @@ header{background:#286b69;color:white;text-align:center;padding:13px 18px;font-s
   <p id="portalMessage" role="status"></p>
  </div>
 </section>
-<script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js">
-// Student profile: stored only on this browser.
-const PROFILE_KEY="pino-character-student-profile-v1";
-let studentProfile=null;
-try{studentProfile=JSON.parse(localStorage.getItem(PROFILE_KEY)||"null")}catch(_){}
-const welcome=document.getElementById("studentWelcome");
-function showWelcome(){welcome.hidden=false; if(studentProfile){document.getElementById("studentName").value=studentProfile.name||"";document.getElementById("studentGrade").value=studentProfile.grade||"";document.getElementById("studentClass").value=studentProfile.className||""}}
-function updateProfileBar(){document.getElementById("profileSummary").textContent=studentProfile?`${studentProfile.name} • Grade ${studentProfile.grade} • Class ${studentProfile.className}`:""}
-document.getElementById("welcomeForm").addEventListener("submit",e=>{e.preventDefault();studentProfile={name:document.getElementById("studentName").value.trim(),grade:document.getElementById("studentGrade").value,className:document.getElementById("studentClass").value};if(!studentProfile.name)return;localStorage.setItem(PROFILE_KEY,JSON.stringify(studentProfile));welcome.hidden=true;updateProfileBar()});
-document.getElementById("changeProfileBtn").onclick=showWelcome;
-if(!studentProfile?.name||!studentProfile?.grade||!studentProfile?.className)showWelcome();else updateProfileBar();
-
-const firebaseConfig={
- apiKey:"AIzaSyDW5t-1OpH5NMYxu2k47LbleFVttEhE8YM",
- authDomain:"character-introduction.firebaseapp.com",
- databaseURL:"https://character-introduction-default-rtdb.asia-southeast1.firebasedatabase.app",
- projectId:"character-introduction",
- storageBucket:"character-introduction.firebasestorage.app",
- messagingSenderId:"77465434334",
- appId:"1:77465434334:web:4bbea7846ca59b9b1baa4f"
-};
-firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth(),db=firebase.database();
-let teacherSession=false,submissionCache={};
-function showPortalMessage(msg){document.getElementById("portalMessage").textContent=msg}
-function setPortalState(isTeacher){teacherSession=isTeacher;document.getElementById("portalLogin").hidden=isTeacher;document.getElementById("portalContent").hidden=!isTeacher}
-async function ensureAnonymous(){
- if(auth.currentUser && auth.currentUser.isAnonymous)return auth.currentUser;
- if(auth.currentUser && !auth.currentUser.isAnonymous)throw Error("Please log out of the Teacher Portal before submitting.");
- const result=await auth.signInAnonymously();return result.user;
-}
-function resizedPhoto(){
- const src=capturedPhoto.getAttribute("src");if(!src)return "";
- const canvas=document.createElement("canvas"),max=650;
- const w=capturedPhoto.naturalWidth||650,h=capturedPhoto.naturalHeight||500;
- const scale=Math.min(1,max/Math.max(w,h));canvas.width=Math.max(1,Math.round(w*scale));canvas.height=Math.max(1,Math.round(h*scale));
- canvas.getContext("2d").drawImage(capturedPhoto,0,0,canvas.width,canvas.height);
- return canvas.toDataURL("image/jpeg",.65);
-}
-document.getElementById("sendTeacherBtn").onclick=async()=>{
- const button=document.getElementById("sendTeacherBtn");
- if(!studentProfile?.name){showWelcome();return}
- const lines=writingInputs.map(i=>i.value.trim());
- if(!lines.some(Boolean)){alert("Please write your introduction first.");return}
- if(!confirm(`Send this introduction to both teachers?\nStudent: ${studentProfile.name}`))return;
- button.disabled=true;button.textContent="Sending...";
- try{
-  const user=await ensureAnonymous();
-  const photo=resizedPhoto();
-  if(photo.length>500000)throw Error("Photo is too large. Please use a smaller image.");
-  const now=new Date();
-  const data={studentName:studentProfile.name,grade:studentProfile.grade,className:studentProfile.className,schoolYear:String(now.getMonth()>=3?now.getFullYear():now.getFullYear()-1),sentences:lines,photo,studentUid:user.uid,status:"New",createdAt:firebase.database.ServerValue.TIMESTAMP};
-  await db.ref("submissions").push(data);
-  alert("Sent to Teacher! / 先生に送りました！");
- }catch(err){alert("Could not send. "+err.message+"\nPlease check the Firebase rules before using this feature.")}
- finally{button.disabled=false;button.textContent="📨 Send to Teacher"}
-};
-document.getElementById("openTeacherBtn").onclick=()=>{document.getElementById("teacherPortal").classList.add("show");document.getElementById("portalPreview").hidden=true;showPortalMessage("");if(teacherSession)loadSubmissions()};
-document.getElementById("closePortalBtn").onclick=()=>document.getElementById("teacherPortal").classList.remove("show");
-document.getElementById("teacherLoginBtn").onclick=async()=>{
- const email=document.getElementById("teacherEmail").value.trim(),password=document.getElementById("teacherPassword").value;
- try{
-  if(auth.currentUser?.isAnonymous)await auth.signOut();
-  const credential=await auth.signInWithEmailAndPassword(email,password);
-  const profile=await db.ref("teachers/"+credential.user.uid).once("value");
-  if(!profile.exists())throw Error("This account is not authorized as a teacher.");
-  setPortalState(true);document.getElementById("teacherPassword").value="";showPortalMessage("");await loadSubmissions();
- }catch(err){setPortalState(false);showPortalMessage(err.message);if(auth.currentUser&&!auth.currentUser.isAnonymous)await auth.signOut()}
-};
-document.getElementById("teacherLogoutBtn").onclick=async()=>{await auth.signOut();setPortalState(false);submissionCache={};document.getElementById("submissionRows").replaceChildren();document.getElementById("portalPreview").hidden=true;showPortalMessage("Signed out.")};
-async function loadSubmissions(){
- if(!teacherSession)return;
- try{
-  const snapshot=await db.ref("submissions").once("value");submissionCache=snapshot.val()||{};
-  const rows=document.getElementById("submissionRows");rows.replaceChildren();
-  const entries=Object.entries(submissionCache).sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0));
-  document.getElementById("portalCount").textContent=`${entries.length} submissions • ${entries.filter(([k,v])=>v.status!=="Reviewed").length} new`;
-  for(const [id,submission] of entries){
-   const tr=document.createElement("tr");
-   const date=submission.createdAt?new Date(submission.createdAt).toLocaleString():"—";
-   for(const val of [submission.studentName,submission.grade,submission.className,date,submission.status||"New"]){const td=document.createElement("td");td.textContent=val||"—";tr.appendChild(td)}
-   const td=document.createElement("td");
-   const view=document.createElement("button");view.textContent="View";view.onclick=()=>showSubmission(submission);
-   const review=document.createElement("button");review.textContent=submission.status==="Reviewed"?"✓ Reviewed":"Mark Reviewed";review.disabled=submission.status==="Reviewed";review.onclick=async()=>{try{await db.ref("submissions/"+id+"/status").set("Reviewed");await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
-   const del=document.createElement("button");del.textContent="Delete";del.onclick=async()=>{if(!confirm(`Permanently delete ${submission.studentName}'s submission?`))return;try{await db.ref("submissions/"+id).remove();await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
-   td.append(view,review,del);tr.appendChild(td);rows.appendChild(tr);
-  }
- }catch(err){showPortalMessage("Could not load submissions: "+err.message)}
-}
-function showSubmission(data){
- const panel=document.getElementById("portalPreview");panel.replaceChildren();panel.hidden=false;
- const title=document.createElement("h3");title.textContent=`${data.studentName} — Grade ${data.grade}, Class ${data.className}`;panel.appendChild(title);
- if(data.photo){const img=document.createElement("img");img.src=data.photo;img.alt="Submitted character photo";panel.appendChild(img)}
- for(const sentence of data.sentences||[]){if(!sentence)continue;const p=document.createElement("p");p.textContent=sentence;panel.appendChild(p)}
- panel.scrollIntoView({behavior:"smooth",block:"start"});
-}
-document.getElementById("refreshPortalBtn").onclick=loadSubmissions;
-document.getElementById("deleteYearBtn").onclick=async()=>{
- const year=document.getElementById("deleteYear").value.trim();
- if(!/^\d{4}$/.test(year)){alert("Enter a four-digit school year.");return}
- const matches=Object.entries(submissionCache).filter(([id,v])=>v.schoolYear===year);
- if(!matches.length){alert("No submissions for this school year.");return}
- if(!confirm(`Permanently delete ${matches.length} submissions for school year ${year}?`))return;
- const typed=prompt(`Type DELETE ${year} to confirm permanent deletion:`);
- if(typed!==`DELETE ${year}`)return;
- try{const updates={};for(const [id] of matches)updates[id]=null;await db.ref("submissions").update(updates);await loadSubmissions();showPortalMessage(`Deleted ${matches.length} submissions for ${year}.`)}catch(err){showPortalMessage(err.message)}
-};
-
-</script><script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js">
-// Student profile: stored only on this browser.
-const PROFILE_KEY="pino-character-student-profile-v1";
-let studentProfile=null;
-try{studentProfile=JSON.parse(localStorage.getItem(PROFILE_KEY)||"null")}catch(_){}
-const welcome=document.getElementById("studentWelcome");
-function showWelcome(){welcome.hidden=false; if(studentProfile){document.getElementById("studentName").value=studentProfile.name||"";document.getElementById("studentGrade").value=studentProfile.grade||"";document.getElementById("studentClass").value=studentProfile.className||""}}
-function updateProfileBar(){document.getElementById("profileSummary").textContent=studentProfile?`${studentProfile.name} • Grade ${studentProfile.grade} • Class ${studentProfile.className}`:""}
-document.getElementById("welcomeForm").addEventListener("submit",e=>{e.preventDefault();studentProfile={name:document.getElementById("studentName").value.trim(),grade:document.getElementById("studentGrade").value,className:document.getElementById("studentClass").value};if(!studentProfile.name)return;localStorage.setItem(PROFILE_KEY,JSON.stringify(studentProfile));welcome.hidden=true;updateProfileBar()});
-document.getElementById("changeProfileBtn").onclick=showWelcome;
-if(!studentProfile?.name||!studentProfile?.grade||!studentProfile?.className)showWelcome();else updateProfileBar();
-
-const firebaseConfig={
- apiKey:"AIzaSyDW5t-1OpH5NMYxu2k47LbleFVttEhE8YM",
- authDomain:"character-introduction.firebaseapp.com",
- databaseURL:"https://character-introduction-default-rtdb.asia-southeast1.firebasedatabase.app",
- projectId:"character-introduction",
- storageBucket:"character-introduction.firebasestorage.app",
- messagingSenderId:"77465434334",
- appId:"1:77465434334:web:4bbea7846ca59b9b1baa4f"
-};
-firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth(),db=firebase.database();
-let teacherSession=false,submissionCache={};
-function showPortalMessage(msg){document.getElementById("portalMessage").textContent=msg}
-function setPortalState(isTeacher){teacherSession=isTeacher;document.getElementById("portalLogin").hidden=isTeacher;document.getElementById("portalContent").hidden=!isTeacher}
-async function ensureAnonymous(){
- if(auth.currentUser && auth.currentUser.isAnonymous)return auth.currentUser;
- if(auth.currentUser && !auth.currentUser.isAnonymous)throw Error("Please log out of the Teacher Portal before submitting.");
- const result=await auth.signInAnonymously();return result.user;
-}
-function resizedPhoto(){
- const src=capturedPhoto.getAttribute("src");if(!src)return "";
- const canvas=document.createElement("canvas"),max=650;
- const w=capturedPhoto.naturalWidth||650,h=capturedPhoto.naturalHeight||500;
- const scale=Math.min(1,max/Math.max(w,h));canvas.width=Math.max(1,Math.round(w*scale));canvas.height=Math.max(1,Math.round(h*scale));
- canvas.getContext("2d").drawImage(capturedPhoto,0,0,canvas.width,canvas.height);
- return canvas.toDataURL("image/jpeg",.65);
-}
-document.getElementById("sendTeacherBtn").onclick=async()=>{
- const button=document.getElementById("sendTeacherBtn");
- if(!studentProfile?.name){showWelcome();return}
- const lines=writingInputs.map(i=>i.value.trim());
- if(!lines.some(Boolean)){alert("Please write your introduction first.");return}
- if(!confirm(`Send this introduction to both teachers?\nStudent: ${studentProfile.name}`))return;
- button.disabled=true;button.textContent="Sending...";
- try{
-  const user=await ensureAnonymous();
-  const photo=resizedPhoto();
-  if(photo.length>500000)throw Error("Photo is too large. Please use a smaller image.");
-  const now=new Date();
-  const data={studentName:studentProfile.name,grade:studentProfile.grade,className:studentProfile.className,schoolYear:String(now.getMonth()>=3?now.getFullYear():now.getFullYear()-1),sentences:lines,photo,studentUid:user.uid,status:"New",createdAt:firebase.database.ServerValue.TIMESTAMP};
-  await db.ref("submissions").push(data);
-  alert("Sent to Teacher! / 先生に送りました！");
- }catch(err){alert("Could not send. "+err.message+"\nPlease check the Firebase rules before using this feature.")}
- finally{button.disabled=false;button.textContent="📨 Send to Teacher"}
-};
-document.getElementById("openTeacherBtn").onclick=()=>{document.getElementById("teacherPortal").classList.add("show");document.getElementById("portalPreview").hidden=true;showPortalMessage("");if(teacherSession)loadSubmissions()};
-document.getElementById("closePortalBtn").onclick=()=>document.getElementById("teacherPortal").classList.remove("show");
-document.getElementById("teacherLoginBtn").onclick=async()=>{
- const email=document.getElementById("teacherEmail").value.trim(),password=document.getElementById("teacherPassword").value;
- try{
-  if(auth.currentUser?.isAnonymous)await auth.signOut();
-  const credential=await auth.signInWithEmailAndPassword(email,password);
-  const profile=await db.ref("teachers/"+credential.user.uid).once("value");
-  if(!profile.exists())throw Error("This account is not authorized as a teacher.");
-  setPortalState(true);document.getElementById("teacherPassword").value="";showPortalMessage("");await loadSubmissions();
- }catch(err){setPortalState(false);showPortalMessage(err.message);if(auth.currentUser&&!auth.currentUser.isAnonymous)await auth.signOut()}
-};
-document.getElementById("teacherLogoutBtn").onclick=async()=>{await auth.signOut();setPortalState(false);submissionCache={};document.getElementById("submissionRows").replaceChildren();document.getElementById("portalPreview").hidden=true;showPortalMessage("Signed out.")};
-async function loadSubmissions(){
- if(!teacherSession)return;
- try{
-  const snapshot=await db.ref("submissions").once("value");submissionCache=snapshot.val()||{};
-  const rows=document.getElementById("submissionRows");rows.replaceChildren();
-  const entries=Object.entries(submissionCache).sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0));
-  document.getElementById("portalCount").textContent=`${entries.length} submissions • ${entries.filter(([k,v])=>v.status!=="Reviewed").length} new`;
-  for(const [id,submission] of entries){
-   const tr=document.createElement("tr");
-   const date=submission.createdAt?new Date(submission.createdAt).toLocaleString():"—";
-   for(const val of [submission.studentName,submission.grade,submission.className,date,submission.status||"New"]){const td=document.createElement("td");td.textContent=val||"—";tr.appendChild(td)}
-   const td=document.createElement("td");
-   const view=document.createElement("button");view.textContent="View";view.onclick=()=>showSubmission(submission);
-   const review=document.createElement("button");review.textContent=submission.status==="Reviewed"?"✓ Reviewed":"Mark Reviewed";review.disabled=submission.status==="Reviewed";review.onclick=async()=>{try{await db.ref("submissions/"+id+"/status").set("Reviewed");await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
-   const del=document.createElement("button");del.textContent="Delete";del.onclick=async()=>{if(!confirm(`Permanently delete ${submission.studentName}'s submission?`))return;try{await db.ref("submissions/"+id).remove();await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
-   td.append(view,review,del);tr.appendChild(td);rows.appendChild(tr);
-  }
- }catch(err){showPortalMessage("Could not load submissions: "+err.message)}
-}
-function showSubmission(data){
- const panel=document.getElementById("portalPreview");panel.replaceChildren();panel.hidden=false;
- const title=document.createElement("h3");title.textContent=`${data.studentName} — Grade ${data.grade}, Class ${data.className}`;panel.appendChild(title);
- if(data.photo){const img=document.createElement("img");img.src=data.photo;img.alt="Submitted character photo";panel.appendChild(img)}
- for(const sentence of data.sentences||[]){if(!sentence)continue;const p=document.createElement("p");p.textContent=sentence;panel.appendChild(p)}
- panel.scrollIntoView({behavior:"smooth",block:"start"});
-}
-document.getElementById("refreshPortalBtn").onclick=loadSubmissions;
-document.getElementById("deleteYearBtn").onclick=async()=>{
- const year=document.getElementById("deleteYear").value.trim();
- if(!/^\d{4}$/.test(year)){alert("Enter a four-digit school year.");return}
- const matches=Object.entries(submissionCache).filter(([id,v])=>v.schoolYear===year);
- if(!matches.length){alert("No submissions for this school year.");return}
- if(!confirm(`Permanently delete ${matches.length} submissions for school year ${year}?`))return;
- const typed=prompt(`Type DELETE ${year} to confirm permanent deletion:`);
- if(typed!==`DELETE ${year}`)return;
- try{const updates={};for(const [id] of matches)updates[id]=null;await db.ref("submissions").update(updates);await loadSubmissions();showPortalMessage(`Deleted ${matches.length} submissions for ${year}.`)}catch(err){showPortalMessage(err.message)}
-};
-
-</script><script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js">
-// Student profile: stored only on this browser.
-const PROFILE_KEY="pino-character-student-profile-v1";
-let studentProfile=null;
-try{studentProfile=JSON.parse(localStorage.getItem(PROFILE_KEY)||"null")}catch(_){}
-const welcome=document.getElementById("studentWelcome");
-function showWelcome(){welcome.hidden=false; if(studentProfile){document.getElementById("studentName").value=studentProfile.name||"";document.getElementById("studentGrade").value=studentProfile.grade||"";document.getElementById("studentClass").value=studentProfile.className||""}}
-function updateProfileBar(){document.getElementById("profileSummary").textContent=studentProfile?`${studentProfile.name} • Grade ${studentProfile.grade} • Class ${studentProfile.className}`:""}
-document.getElementById("welcomeForm").addEventListener("submit",e=>{e.preventDefault();studentProfile={name:document.getElementById("studentName").value.trim(),grade:document.getElementById("studentGrade").value,className:document.getElementById("studentClass").value};if(!studentProfile.name)return;localStorage.setItem(PROFILE_KEY,JSON.stringify(studentProfile));welcome.hidden=true;updateProfileBar()});
-document.getElementById("changeProfileBtn").onclick=showWelcome;
-if(!studentProfile?.name||!studentProfile?.grade||!studentProfile?.className)showWelcome();else updateProfileBar();
-
-const firebaseConfig={
- apiKey:"AIzaSyDW5t-1OpH5NMYxu2k47LbleFVttEhE8YM",
- authDomain:"character-introduction.firebaseapp.com",
- databaseURL:"https://character-introduction-default-rtdb.asia-southeast1.firebasedatabase.app",
- projectId:"character-introduction",
- storageBucket:"character-introduction.firebasestorage.app",
- messagingSenderId:"77465434334",
- appId:"1:77465434334:web:4bbea7846ca59b9b1baa4f"
-};
-firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth(),db=firebase.database();
-let teacherSession=false,submissionCache={};
-function showPortalMessage(msg){document.getElementById("portalMessage").textContent=msg}
-function setPortalState(isTeacher){teacherSession=isTeacher;document.getElementById("portalLogin").hidden=isTeacher;document.getElementById("portalContent").hidden=!isTeacher}
-async function ensureAnonymous(){
- if(auth.currentUser && auth.currentUser.isAnonymous)return auth.currentUser;
- if(auth.currentUser && !auth.currentUser.isAnonymous)throw Error("Please log out of the Teacher Portal before submitting.");
- const result=await auth.signInAnonymously();return result.user;
-}
-function resizedPhoto(){
- const src=capturedPhoto.getAttribute("src");if(!src)return "";
- const canvas=document.createElement("canvas"),max=650;
- const w=capturedPhoto.naturalWidth||650,h=capturedPhoto.naturalHeight||500;
- const scale=Math.min(1,max/Math.max(w,h));canvas.width=Math.max(1,Math.round(w*scale));canvas.height=Math.max(1,Math.round(h*scale));
- canvas.getContext("2d").drawImage(capturedPhoto,0,0,canvas.width,canvas.height);
- return canvas.toDataURL("image/jpeg",.65);
-}
-document.getElementById("sendTeacherBtn").onclick=async()=>{
- const button=document.getElementById("sendTeacherBtn");
- if(!studentProfile?.name){showWelcome();return}
- const lines=writingInputs.map(i=>i.value.trim());
- if(!lines.some(Boolean)){alert("Please write your introduction first.");return}
- if(!confirm(`Send this introduction to both teachers?\nStudent: ${studentProfile.name}`))return;
- button.disabled=true;button.textContent="Sending...";
- try{
-  const user=await ensureAnonymous();
-  const photo=resizedPhoto();
-  if(photo.length>500000)throw Error("Photo is too large. Please use a smaller image.");
-  const now=new Date();
-  const data={studentName:studentProfile.name,grade:studentProfile.grade,className:studentProfile.className,schoolYear:String(now.getMonth()>=3?now.getFullYear():now.getFullYear()-1),sentences:lines,photo,studentUid:user.uid,status:"New",createdAt:firebase.database.ServerValue.TIMESTAMP};
-  await db.ref("submissions").push(data);
-  alert("Sent to Teacher! / 先生に送りました！");
- }catch(err){alert("Could not send. "+err.message+"\nPlease check the Firebase rules before using this feature.")}
- finally{button.disabled=false;button.textContent="📨 Send to Teacher"}
-};
-document.getElementById("openTeacherBtn").onclick=()=>{document.getElementById("teacherPortal").classList.add("show");document.getElementById("portalPreview").hidden=true;showPortalMessage("");if(teacherSession)loadSubmissions()};
-document.getElementById("closePortalBtn").onclick=()=>document.getElementById("teacherPortal").classList.remove("show");
-document.getElementById("teacherLoginBtn").onclick=async()=>{
- const email=document.getElementById("teacherEmail").value.trim(),password=document.getElementById("teacherPassword").value;
- try{
-  if(auth.currentUser?.isAnonymous)await auth.signOut();
-  const credential=await auth.signInWithEmailAndPassword(email,password);
-  const profile=await db.ref("teachers/"+credential.user.uid).once("value");
-  if(!profile.exists())throw Error("This account is not authorized as a teacher.");
-  setPortalState(true);document.getElementById("teacherPassword").value="";showPortalMessage("");await loadSubmissions();
- }catch(err){setPortalState(false);showPortalMessage(err.message);if(auth.currentUser&&!auth.currentUser.isAnonymous)await auth.signOut()}
-};
-document.getElementById("teacherLogoutBtn").onclick=async()=>{await auth.signOut();setPortalState(false);submissionCache={};document.getElementById("submissionRows").replaceChildren();document.getElementById("portalPreview").hidden=true;showPortalMessage("Signed out.")};
-async function loadSubmissions(){
- if(!teacherSession)return;
- try{
-  const snapshot=await db.ref("submissions").once("value");submissionCache=snapshot.val()||{};
-  const rows=document.getElementById("submissionRows");rows.replaceChildren();
-  const entries=Object.entries(submissionCache).sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0));
-  document.getElementById("portalCount").textContent=`${entries.length} submissions • ${entries.filter(([k,v])=>v.status!=="Reviewed").length} new`;
-  for(const [id,submission] of entries){
-   const tr=document.createElement("tr");
-   const date=submission.createdAt?new Date(submission.createdAt).toLocaleString():"—";
-   for(const val of [submission.studentName,submission.grade,submission.className,date,submission.status||"New"]){const td=document.createElement("td");td.textContent=val||"—";tr.appendChild(td)}
-   const td=document.createElement("td");
-   const view=document.createElement("button");view.textContent="View";view.onclick=()=>showSubmission(submission);
-   const review=document.createElement("button");review.textContent=submission.status==="Reviewed"?"✓ Reviewed":"Mark Reviewed";review.disabled=submission.status==="Reviewed";review.onclick=async()=>{try{await db.ref("submissions/"+id+"/status").set("Reviewed");await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
-   const del=document.createElement("button");del.textContent="Delete";del.onclick=async()=>{if(!confirm(`Permanently delete ${submission.studentName}'s submission?`))return;try{await db.ref("submissions/"+id).remove();await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
-   td.append(view,review,del);tr.appendChild(td);rows.appendChild(tr);
-  }
- }catch(err){showPortalMessage("Could not load submissions: "+err.message)}
-}
-function showSubmission(data){
- const panel=document.getElementById("portalPreview");panel.replaceChildren();panel.hidden=false;
- const title=document.createElement("h3");title.textContent=`${data.studentName} — Grade ${data.grade}, Class ${data.className}`;panel.appendChild(title);
- if(data.photo){const img=document.createElement("img");img.src=data.photo;img.alt="Submitted character photo";panel.appendChild(img)}
- for(const sentence of data.sentences||[]){if(!sentence)continue;const p=document.createElement("p");p.textContent=sentence;panel.appendChild(p)}
- panel.scrollIntoView({behavior:"smooth",block:"start"});
-}
-document.getElementById("refreshPortalBtn").onclick=loadSubmissions;
-document.getElementById("deleteYearBtn").onclick=async()=>{
- const year=document.getElementById("deleteYear").value.trim();
- if(!/^\d{4}$/.test(year)){alert("Enter a four-digit school year.");return}
- const matches=Object.entries(submissionCache).filter(([id,v])=>v.schoolYear===year);
- if(!matches.length){alert("No submissions for this school year.");return}
- if(!confirm(`Permanently delete ${matches.length} submissions for school year ${year}?`))return;
- const typed=prompt(`Type DELETE ${year} to confirm permanent deletion:`);
- if(typed!==`DELETE ${year}`)return;
- try{const updates={};for(const [id] of matches)updates[id]=null;await db.ref("submissions").update(updates);await loadSubmissions();showPortalMessage(`Deleted ${matches.length} submissions for ${year}.`)}catch(err){showPortalMessage(err.message)}
-};
-
-</script>
+<script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js"></script>
 <script>
 let cameraStream=null;
 let cameraFacing="user";
@@ -668,23 +377,65 @@ function resizedPhoto(){
  canvas.getContext("2d").drawImage(capturedPhoto,0,0,canvas.width,canvas.height);
  return canvas.toDataURL("image/jpeg",.65);
 }
+// ---- Submissions: one record per student (Firebase UID) per assignment ----
+// Key format: submissions/<studentUid>__<assignmentId>. Older records (random push keys) are left untouched.
+const ASSIGNMENT_BASE="character-introduction";
+function currentSchoolYear(){const now=new Date();return String(now.getMonth()>=3?now.getFullYear():now.getFullYear()-1)}
+function assignmentIdFor(year){return `${ASSIGNMENT_BASE}-${year}`}
+function submissionKeyFor(uid,assignmentId){return `${uid}__${assignmentId}`}
+function normalizeSentence(s){return String(s||"").replace(/\s+/g," ").trim()}
+function sentenceArray(raw){return Array.isArray(raw)?raw:Object.values(raw||{})}
+async function contentHashOf(sentences,photoSrc){
+ const text=JSON.stringify({s:sentences.map(normalizeSentence),p:photoSrc||""});
+ if(window.crypto&&crypto.subtle&&window.TextEncoder){
+  const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(text));
+  return "sha256-"+[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+ }
+ let h=0x811c9dc5;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}
+ return "fnv-"+text.length+"-"+h.toString(16);
+}
+const DUPLICATE_MESSAGE="You have already submitted this work. Please make changes before sending again.\nこの作文はすでに提出されています。変更してから再提出してください。";
+let submitInFlight=false;
 document.getElementById("sendTeacherBtn").onclick=async()=>{
  const button=document.getElementById("sendTeacherBtn");
+ if(submitInFlight)return;
  if(!studentProfile?.name){showWelcome();return}
  const lines=writingInputs.map(i=>i.value.trim());
  if(!lines.some(Boolean)){alert("Please write your introduction first.");return}
- if(!confirm(`Send this introduction to both teachers?\nStudent: ${studentProfile.name}`))return;
- button.disabled=true;button.textContent="Sending...";
+ submitInFlight=true;button.disabled=true;button.textContent="Checking...";
  try{
   const user=await ensureAnonymous();
+  const schoolYear=currentSchoolYear(),assignmentId=assignmentIdFor(schoolYear);
+  const ref=db.ref("submissions/"+submissionKeyFor(user.uid,assignmentId));
+  const hash=await contentHashOf(lines,capturedPhoto.getAttribute("src"));
+  // Quick server check so an unchanged resend is stopped before the confirm box.
+  const previousHash=(await ref.child("contentHash").once("value")).val();
+  if(previousHash===hash){alert(DUPLICATE_MESSAGE);return}
+  const isUpdate=previousHash!==null;
+  const question=isUpdate
+   ?`Send your UPDATED introduction to the teachers?\nIt replaces the version you sent before.\n更新した作文を先生に送りますか？\nStudent: ${studentProfile.name}`
+   :`Send this introduction to both teachers?\nStudent: ${studentProfile.name}`;
+  if(!confirm(question))return;
+  button.textContent="Sending...";
   const photo=resizedPhoto();
   if(photo.length>500000)throw Error("Photo is too large. Please use a smaller image.");
-  const now=new Date();
-  const data={studentName:studentProfile.name,grade:studentProfile.grade,className:studentProfile.className,schoolYear:String(now.getMonth()>=3?now.getFullYear():now.getFullYear()-1),sentences:lines,photo,studentUid:user.uid,status:"New",createdAt:firebase.database.ServerValue.TIMESTAMP};
-  await db.ref("submissions").push(data);
-  alert("Sent to Teacher! / 先生に送りました！");
+  const TS=firebase.database.ServerValue.TIMESTAMP;
+  const base={studentName:studentProfile.name,grade:studentProfile.grade,className:studentProfile.className,schoolYear,assignmentId,sentences:lines,photo,studentUid:user.uid,contentHash:hash};
+  let duplicate=false;
+  // The transaction runs on the server copy, so repeated clicks or two tabs cannot create duplicates.
+  const result=await ref.transaction(current=>{
+   duplicate=false;
+   if(current&&current.studentUid&&current.studentUid!==user.uid)return; // never touch another student's record
+   if(current&&current.contentHash===hash){duplicate=true;return}      // unchanged: abort, write nothing
+   if(!current)return {...base,status:"New",version:1,createdAt:TS,updatedAt:TS};
+   return {...base,status:"Updated",version:(Number(current.version)||1)+1,createdAt:current.createdAt||TS,updatedAt:TS,
+    previousSentences:sentenceArray(current.sentences),previousUpdatedAt:current.updatedAt||current.createdAt||null};
+  },undefined,false);
+  if(!result.committed){alert(duplicate?DUPLICATE_MESSAGE:"Could not send. Please try again.");return}
+  const saved=result.snapshot.val()||{};
+  alert((Number(saved.version)||1)>1?"Sent to Teacher! / 先生に送りました！\n(Updated version / 更新版)":"Sent to Teacher! / 先生に送りました！");
  }catch(err){alert("Could not send. "+err.message+"\nPlease check the Firebase rules before using this feature.")}
- finally{button.disabled=false;button.textContent="📨 Send to Teacher"}
+ finally{submitInFlight=false;button.disabled=false;button.textContent="📨 Send to Teacher"}
 };
 document.getElementById("openTeacherBtn").onclick=()=>{document.getElementById("teacherPortal").classList.add("show");document.getElementById("portalPreview").hidden=true;showPortalMessage("");if(teacherSession)loadSubmissions()};
 document.getElementById("closePortalBtn").onclick=()=>document.getElementById("teacherPortal").classList.remove("show");
@@ -698,27 +449,37 @@ document.getElementById("teacherLoginBtn").onclick=async()=>{
   setPortalState(true);document.getElementById("teacherPassword").value="";showPortalMessage("");await loadSubmissions();
  }catch(err){setPortalState(false);showPortalMessage(err.message);if(auth.currentUser&&!auth.currentUser.isAnonymous)await auth.signOut()}
 };
-document.getElementById("teacherLogoutBtn").onclick=async()=>{await auth.signOut();setPortalState(false);submissionCache={};document.getElementById("submissionRows").replaceChildren();document.getElementById("portalPreview").hidden=true;showPortalMessage("Signed out.")};
+document.getElementById("teacherLogoutBtn").onclick=async()=>{await auth.signOut();setPortalState(false);submissionCache={};openSubmissionId=null;renderedPreviewStamp=null;document.getElementById("submissionRows").replaceChildren();document.getElementById("portalPreview").hidden=true;showPortalMessage("Signed out.")};
 let openSubmissionId=null;
+let renderedPreviewStamp=null;
 let feedbackLoadingToken=0;
+function previewStamp(id,s){return s?`${id}|${s.version||1}|${s.updatedAt||s.createdAt||0}`:null}
+function statusLabel(s){const st=s.status||"New";return st==="Updated"?"🔄 Updated – needs review":st}
 async function loadSubmissions(){
  if(!teacherSession)return;
  try{
   const snapshot=await db.ref("submissions").once("value");submissionCache=snapshot.val()||{};
   const rows=document.getElementById("submissionRows");rows.replaceChildren();
-  const entries=Object.entries(submissionCache).sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0));
+  const entries=Object.entries(submissionCache).sort((a,b)=>(b[1].updatedAt||b[1].createdAt||0)-(a[1].updatedAt||a[1].createdAt||0));
   document.getElementById("portalCount").textContent=`${entries.length} submissions • ${entries.filter(([k,v])=>v.status!=="Reviewed").length} new`;
+  // Older records (sent before one-record-per-student) are kept; tag them when the same student now has a current record.
+  const currentOwners=new Set(entries.filter(([k,v])=>v.assignmentId&&v.studentUid).map(([k,v])=>v.studentUid+"|"+v.schoolYear));
   if(openSubmissionId&&!submissionCache[openSubmissionId])openSubmissionId=null;
   for(const [id,submission] of entries){
    const tr=document.createElement("tr");
-   const date=submission.createdAt?new Date(submission.createdAt).toLocaleString():"—";
-   for(const val of [submission.studentName,submission.grade,submission.className,date,submission.status||"New"]){const td=document.createElement("td");td.textContent=val||"—";tr.appendChild(td)}
+   const when=submission.updatedAt||submission.createdAt;
+   const date=when?new Date(when).toLocaleString()+((Number(submission.version)||1)>1?` (v${submission.version})`:""):"—";
+   for(const val of [submission.studentName,submission.grade,submission.className,date]){const td=document.createElement("td");td.textContent=val||"—";tr.appendChild(td)}
+   const statusTd=document.createElement("td");statusTd.textContent=statusLabel(submission);
+   if(submission.status==="Updated")statusTd.className="status-updated";
+   if(!submission.assignmentId&&currentOwners.has(submission.studentUid+"|"+submission.schoolYear)){const tag=document.createElement("span");tag.className="legacy-tag";tag.textContent="earlier copy";tag.title="Sent before duplicate prevention. This student also has a newer record.";statusTd.appendChild(tag)}
+   tr.appendChild(statusTd);
    const td=document.createElement("td");
    const view=document.createElement("button");view.textContent=openSubmissionId===id?"Hide":"View";
    view.setAttribute("aria-expanded",String(openSubmissionId===id));
    view.onclick=()=>{
     if(openSubmissionId===id){openSubmissionId=null;hideSubmission()}
-    else{openSubmissionId=id;showSubmission(submission,id)}
+    else{openSubmissionId=id;showSubmission(submissionCache[id],id)}
     rows.querySelectorAll('button[data-preview-id]').forEach(b=>{const selected=b.dataset.previewId===openSubmissionId;b.textContent=selected?'Hide':'View';b.setAttribute('aria-expanded',String(selected))});
    };
    view.dataset.previewId=id;
@@ -726,45 +487,89 @@ async function loadSubmissions(){
    const del=document.createElement("button");del.textContent="Delete";del.onclick=async()=>{if(!confirm(`Permanently delete ${submission.studentName}'s submission?`))return;try{await db.ref("submissions/"+id).remove();await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
    td.append(view,review,del);tr.appendChild(td);rows.appendChild(tr);
   }
-  if(openSubmissionId)showSubmission(submissionCache[openSubmissionId],openSubmissionId,false);else hideSubmission();
+  // Re-render the open preview only if the student's work changed, so unsaved corrections are not lost on refresh.
+  if(openSubmissionId){if(previewStamp(openSubmissionId,submissionCache[openSubmissionId])!==renderedPreviewStamp)showSubmission(submissionCache[openSubmissionId],openSubmissionId,false)}
+  else hideSubmission();
  }catch(err){showPortalMessage("Could not load submissions: "+err.message)}
 }
-function hideSubmission(){feedbackLoadingToken++;const panel=document.getElementById("portalPreview");panel.hidden=true;panel.replaceChildren()}
+function hideSubmission(){feedbackLoadingToken++;renderedPreviewStamp=null;const panel=document.getElementById("portalPreview");panel.hidden=true;panel.replaceChildren()}
 function feedbackSentences(data){
- const raw=data.sentences||[];
- return Array.from({length:6},(_,i)=>Array.isArray(raw)?(raw[i]||''):(raw[i]||''));
+ const raw=sentenceArray(data.sentences);
+ return Array.from({length:6},(_,i)=>raw[i]||'');
 }
 function addElement(parent,tag,content,cls){const el=document.createElement(tag);if(content!==undefined)el.textContent=content;if(cls)el.className=cls;parent.appendChild(el);return el}
+const MARK_TEXT={correct:'✓ Correct',needsCorrection:'✗ Needs correction',unchecked:'Not checked'};
+function hasFeedbackContent(item){return item&&((item.mark&&item.mark!=='unchecked')||item.correction||item.comment)}
 async function showSubmission(data,id,scroll=true){
  const token=++feedbackLoadingToken;
+ renderedPreviewStamp=previewStamp(id,data);
+ const version=Number(data.version)||1;
  const panel=document.getElementById('portalPreview');panel.replaceChildren();panel.hidden=false;
  const heading=addElement(panel,'div',undefined,'portal-preview-heading');
  addElement(heading,'h3',`${data.studentName} — Grade ${data.grade}, Class ${data.className}`);
  const close=addElement(heading,'button','✕ Hide preview');close.type='button';close.onclick=()=>{openSubmissionId=null;hideSubmission();document.querySelectorAll('#submissionRows button[data-preview-id]').forEach(b=>{b.textContent='View';b.setAttribute('aria-expanded','false')})};
+ if(version>1){
+  const notice=addElement(panel,'div',undefined,'fb-notice');
+  const when=data.updatedAt?new Date(data.updatedAt).toLocaleString():'';
+  addElement(notice,'div',`🔄 The student sent an updated version (version ${version}${when?', '+when:''}). Please review it again.`);
+  const prev=sentenceArray(data.previousSentences);
+  if(prev.some(Boolean)){
+   const det=addElement(notice,'details');addElement(det,'summary','Show previous version / 前の版');
+   const ol=addElement(det,'ol');prev.forEach(s=>addElement(ol,'li',s||'—'));
+  }
+ }
  if(data.photo){const img=addElement(panel,'img');img.src=data.photo;img.alt='Submitted character photo';img.className='feedback-photo'}
  addElement(panel,'h3','Student Writing / 生徒の作文');
+ const staleNotice=addElement(panel,'div',undefined,'fb-notice');staleNotice.hidden=true;
+ const list=addElement(panel,'div',undefined,'fb-list');
  const rows=[];const sentences=feedbackSentences(data);
  for(let i=0;i<6;i++){
-  const row=addElement(panel,'div',undefined,'feedback-row');addElement(row,'span',`${i+1}.`,'feedback-number');
-  const body=addElement(row,'div');addElement(body,'div',sentences[i]||'—','feedback-original');
-  const radios=addElement(body,'div',undefined,'feedback-controls');const group=`mark-${id}-${i}`;
-  for(const [value,label] of [['unchecked','Not checked'],['correct','✓ Correct'],['needsCorrection','✗ Needs correction']]){
+  const item=addElement(list,'div',undefined,'fb-item');
+  const toggle=addElement(item,'button',undefined,'fb-toggle');toggle.type='button';
+  const panelId=`fb-panel-${id}-${i}`;toggle.setAttribute('aria-expanded','false');toggle.setAttribute('aria-controls',panelId);
+  addElement(toggle,'span',`${i+1}.`,'fb-num');
+  addElement(toggle,'span',sentences[i]||'—','fb-text'+(sentences[i]?'':' empty'));
+  const markEl=addElement(toggle,'span','','fb-mark');
+  addElement(toggle,'span','›','fb-chevron').setAttribute('aria-hidden','true');
+  const region=addElement(item,'div',undefined,'fb-panel');region.id=panelId;region.inert=true;
+  const body=addElement(addElement(region,'div',undefined,'fb-panel-inner'),'div',undefined,'fb-panel-body');
+  const earlier=addElement(body,'div',undefined,'fb-earlier');earlier.hidden=true;
+  addElement(body,'p','Review status','fb-label');
+  const radios=addElement(body,'div',undefined,'fb-radios');const group=`mark-${id}-${i}`;
+  for(const [value,label] of [['unchecked','Not checked'],['correct','✓ Correct'],['needsCorrection','✗ Needs Correction']]){
    const lab=addElement(radios,'label');const radio=addElement(lab,'input');radio.type='radio';radio.name=group;radio.value=value;if(value==='unchecked')radio.checked=true;lab.append(' '+label);
   }
-  const fields=addElement(body,'div',undefined,'feedback-fields');
-  const correctionLabel=addElement(fields,'label','Corrected sentence / 正しい文');const correction=addElement(correctionLabel,'input');correction.type='text';correction.maxLength=500;correction.placeholder='Write the corrected sentence (if needed)';
-  const commentLabel=addElement(fields,'label','Teacher comment / 先生のコメント');const comment=addElement(commentLabel,'textarea');comment.rows=2;comment.maxLength=1000;comment.placeholder='Optional feedback';
-  rows.push({radios,correction,comment});
+  const correctionLabel=addElement(body,'label','Corrected sentence / 正しい文','fb-label');const correction=addElement(correctionLabel,'input');correction.type='text';correction.maxLength=500;correction.placeholder='Write the corrected sentence (if needed)';
+  const commentLabel=addElement(body,'label','Teacher comment / 先生のコメント','fb-label');const comment=addElement(commentLabel,'textarea');comment.rows=2;comment.maxLength=1000;comment.placeholder='Optional feedback';
+  const updateMark=()=>{const v=radios.querySelector('input:checked').value;markEl.textContent=v==='correct'?'✓':v==='needsCorrection'?'✗':'';markEl.className='fb-mark'+(v==='correct'?' correct':v==='needsCorrection'?' needs':'');markEl.title=v==='unchecked'?'':MARK_TEXT[v]};
+  radios.addEventListener('change',updateMark);
+  // Toggling only shows/hides the panel; the inputs stay in the page, so typed text is kept. Nothing is saved here.
+  toggle.onclick=()=>{const open=!item.classList.contains('open');item.classList.toggle('open',open);toggle.setAttribute('aria-expanded',String(open));region.inert=!open};
+  rows.push({radios,correction,comment,earlier,updateMark});
  }
  const save=addElement(panel,'button','💾 Save Feedback / コメントを保存','primary-action feedback-save');save.type='button';
  const msg=addElement(panel,'p','', 'feedback-save-message');msg.setAttribute('role','status');
+ // Feedback already in Firebase for this submission (may be for an earlier version).
+ let existingFeedback=null,existingIsStale=false;
  save.onclick=async()=>{
   if(!teacherSession||!auth.currentUser||auth.currentUser.isAnonymous){msg.textContent='Please sign in as a teacher.';return}
   if(!data.studentUid){msg.textContent='This submission has no student UID.';return}
   const items=rows.map(({radios,correction,comment})=>({mark:radios.querySelector('input:checked').value,correction:correction.value.trim(),comment:comment.value.trim()}));
-  const payload={studentName:data.studentName,grade:String(data.grade),className:String(data.className),sentences,items,updatedAt:firebase.database.ServerValue.TIMESTAMP};
+  const payload={studentName:data.studentName,grade:String(data.grade),className:String(data.className),sentences,items,version,updatedAt:firebase.database.ServerValue.TIMESTAMP};
+  const updates={[id]:payload};
+  let archiveNote='';
+  if(existingFeedback&&existingIsStale){
+   // Keep the earlier feedback as its own record so the student can still read it.
+   const oldVersion=Number(existingFeedback.version)||1;
+   updates[`${id}__v${oldVersion}`]={...existingFeedback,version:oldVersion,archived:true,archiveOf:id,archivedAt:firebase.database.ServerValue.TIMESTAMP};
+   archiveNote=` Earlier feedback (version ${oldVersion}) was kept.`;
+  }
   save.disabled=true;msg.textContent='Saving...';
-  try{await db.ref('feedback/'+data.studentUid+'/'+id).set(payload);msg.textContent='✓ Feedback saved successfully.'}
+  try{
+   await db.ref('feedback/'+data.studentUid).update(updates);
+   existingFeedback={...payload,updatedAt:Date.now()};existingIsStale=false;
+   msg.textContent='✓ Feedback saved successfully.'+archiveNote;
+  }
   catch(e){msg.textContent='Could not save: '+e.message}
   finally{save.disabled=false}
  };
@@ -773,9 +578,37 @@ async function showSubmission(data,id,scroll=true){
   if(!data.studentUid)throw Error('No student UID on this submission.');
   const snap=await db.ref('feedback/'+data.studentUid+'/'+id).once('value');
   if(token!==feedbackLoadingToken||openSubmissionId!==id)return;
-  const existing=snap.val();if(existing&&existing.items){
-   rows.forEach((row,i)=>{const item=existing.items[i]||{};const selected=row.radios.querySelector(`input[value="${item.mark||'unchecked'}"]`);if(selected)selected.checked=true;row.correction.value=item.correction||'';row.comment.value=item.comment||''});
-   msg.textContent='Previous feedback loaded. You can edit and save again.';
+  const existing=snap.val();
+  if(existing&&existing.items){
+   existingFeedback=existing;
+   const oldSentences=feedbackSentences(existing);
+   existingIsStale=(Number(existing.version)||1)!==version||oldSentences.some((s,i)=>normalizeSentence(s)!==normalizeSentence(sentences[i]));
+   const oldItems=existing.items;
+   let carried=0,changed=0;
+   rows.forEach((row,i)=>{
+    const item=oldItems[i]||{};
+    const sameSentence=normalizeSentence(oldSentences[i])===normalizeSentence(sentences[i]);
+    if(!existingIsStale||sameSentence){
+     // Feedback was written for exactly this sentence: load it into the controls.
+     const selected=row.radios.querySelector(`input[value="${item.mark||'unchecked'}"]`);if(selected)selected.checked=true;
+     row.correction.value=item.correction||'';row.comment.value=item.comment||'';
+     if(existingIsStale&&hasFeedbackContent(item))carried++;
+    }else if(hasFeedbackContent(item)){
+     // Sentence changed: show earlier feedback for reference only, never as feedback on the new sentence.
+     changed++;
+     row.earlier.hidden=false;
+     addElement(row.earlier,'strong',`Earlier feedback (version ${Number(existing.version)||1}) — for: “${oldSentences[i]||'—'}”`);
+     addElement(row.earlier,'div',MARK_TEXT[item.mark||'unchecked']);
+     if(item.correction)addElement(row.earlier,'div','Corrected: '+item.correction);
+     if(item.comment)addElement(row.earlier,'div','Comment: '+item.comment);
+    }
+    row.updateMark();
+   });
+   if(existingIsStale){
+    staleNotice.hidden=false;
+    staleNotice.textContent=`Saved feedback was written for an earlier version. ${carried} unchanged sentence(s) keep their feedback; ${changed} changed sentence(s) start as “Not checked” and show the earlier feedback inside the panel. When you save, the earlier feedback is kept as a separate record the student can still see.`;
+    msg.textContent='';
+   }else msg.textContent='Previous feedback loaded. You can edit and save again.';
   }
  }catch(e){if(token===feedbackLoadingToken)msg.textContent='Could not load previous feedback: '+e.message}
 }
@@ -785,11 +618,13 @@ document.getElementById('myFeedbackBtn').onclick=async()=>{
  panel.classList.add('show');list.replaceChildren();msg.textContent='Loading your feedback...';
  try{
   const user=await ensureAnonymous();
-  const snap=await db.ref('feedback/'+user.uid).once('value');const entries=Object.entries(snap.val()||{}).sort((a,b)=>(b[1].updatedAt||0)-(a[1].updatedAt||0));
+  const snap=await db.ref('feedback/'+user.uid).once('value');
+  const entries=Object.entries(snap.val()||{}).sort((a,b)=>(a[1].archived?1:0)-(b[1].archived?1:0)||(b[1].updatedAt||0)-(a[1].updatedAt||0));
   msg.textContent=entries.length?`${entries.length} feedback record(s)`:'No teacher feedback yet. / 先生からのコメントはまだありません。';
   for(const [id,data] of entries){
    const card=addElement(list,'article',undefined,'feedback-card');
-   addElement(card,'h3',`${data.studentName||'My Introduction'} — Grade ${data.grade||'—'}, Class ${data.className||'—'}`);
+   const h=addElement(card,'h3',`${data.studentName||'My Introduction'} — Grade ${data.grade||'—'}, Class ${data.className||'—'}`);
+   if(data.archived)addElement(h,'span','Earlier version / 前のバージョン','feedback-earlier-tag');
    if(data.updatedAt)addElement(card,'small','Updated: '+new Date(data.updatedAt).toLocaleString());
    const sentences=feedbackSentences(data);
    for(let i=0;i<6;i++){
