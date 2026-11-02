@@ -202,6 +202,7 @@ header{background:#286b69;color:white;text-align:center;padding:13px 18px;font-s
   <label>Name / 名前<input id="studentName" maxlength="60" required autocomplete="name" placeholder="Your name"></label>
   <label>Grade / 学年<select id="studentGrade" required><option value="">Choose grade</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select></label>
   <label>Class / 組<select id="studentClass" required><option value="">Choose class</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="Other">Other</option></select></label>
+   <label>Seat Number / 出席番号<input id="studentSeatNumber" type="number" min="1" max="50" step="1" inputmode="numeric" required placeholder="1–50"></label>
   <button class="primary-action" type="submit">Start / スタート</button>
  </form>
 </div>
@@ -270,7 +271,7 @@ header{background:#286b69;color:white;text-align:center;padding:13px 18px;font-s
    <p id="portalCount"></p>
    <button id="refreshPortalBtn" type="button">↻ Refresh</button>
    <button id="teacherLogoutBtn" type="button">Log Out</button>
-   <div style="overflow-x:auto"><table class="portal-table"><thead><tr><th>Student</th><th>Grade</th><th>Class</th><th>Sent</th><th>Status</th><th>Actions</th></tr></thead><tbody id="submissionRows"></tbody></table></div>
+   <div style="overflow-x:auto"><table class="portal-table"><thead><tr><th>Student</th><th>Grade</th><th>Class</th><th>Seat No.</th><th>Sent</th><th>Status</th><th>Actions</th></tr></thead><tbody id="submissionRows"></tbody></table></div>
    <div id="portalPreview" hidden></div>
    <details class="portal-settings"><summary>⚙️ Teacher Settings — Delete Old Submissions</summary>
     <p>Permanent deletion. Both teachers share this list. Please download or otherwise preserve records you need before deleting.</p>
@@ -344,11 +345,11 @@ const PROFILE_KEY="pino-character-student-profile-v1";
 let studentProfile=null;
 try{studentProfile=JSON.parse(localStorage.getItem(PROFILE_KEY)||"null")}catch(_){}
 const welcome=document.getElementById("studentWelcome");
-function showWelcome(){welcome.hidden=false; if(studentProfile){document.getElementById("studentName").value=studentProfile.name||"";document.getElementById("studentGrade").value=studentProfile.grade||"";document.getElementById("studentClass").value=studentProfile.className||""}}
-function updateProfileBar(){document.getElementById("profileSummary").textContent=studentProfile?`${studentProfile.name} • Grade ${studentProfile.grade} • Class ${studentProfile.className}`:""}
-document.getElementById("welcomeForm").addEventListener("submit",e=>{e.preventDefault();studentProfile={name:document.getElementById("studentName").value.trim(),grade:document.getElementById("studentGrade").value,className:document.getElementById("studentClass").value};if(!studentProfile.name)return;localStorage.setItem(PROFILE_KEY,JSON.stringify(studentProfile));welcome.hidden=true;updateProfileBar()});
+function showWelcome(){welcome.hidden=false; if(studentProfile){document.getElementById("studentName").value=studentProfile.name||"";document.getElementById("studentGrade").value=studentProfile.grade||"";document.getElementById("studentClass").value=studentProfile.className||"";document.getElementById("studentSeatNumber").value=studentProfile.seatNumber||""}}
+function updateProfileBar(){document.getElementById("profileSummary").textContent=studentProfile?`${studentProfile.name} • Grade ${studentProfile.grade} • Class ${studentProfile.className} • Seat ${studentProfile.seatNumber||"—"}`:""}
+document.getElementById("welcomeForm").addEventListener("submit",e=>{e.preventDefault();studentProfile={name:document.getElementById("studentName").value.trim(),grade:document.getElementById("studentGrade").value,className:document.getElementById("studentClass").value,seatNumber:Number(document.getElementById("studentSeatNumber").value)};if(!studentProfile.name||!Number.isInteger(studentProfile.seatNumber)||studentProfile.seatNumber<1||studentProfile.seatNumber>50)return;localStorage.setItem(PROFILE_KEY,JSON.stringify(studentProfile));welcome.hidden=true;updateProfileBar()});
 document.getElementById("changeProfileBtn").onclick=showWelcome;
-if(!studentProfile?.name||!studentProfile?.grade||!studentProfile?.className)showWelcome();else updateProfileBar();
+if(!studentProfile?.name||!studentProfile?.grade||!studentProfile?.className||!Number.isInteger(Number(studentProfile?.seatNumber))||Number(studentProfile?.seatNumber)<1||Number(studentProfile?.seatNumber)>50)showWelcome();else updateProfileBar();
 
 const firebaseConfig={
  apiKey:"AIzaSyDW5t-1OpH5NMYxu2k47LbleFVttEhE8YM",
@@ -410,7 +411,7 @@ let submitInFlight=false;
 document.getElementById("sendTeacherBtn").onclick=async()=>{
  const button=document.getElementById("sendTeacherBtn");
  if(submitInFlight)return;
- if(!studentProfile?.name){showWelcome();return}
+ if(!studentProfile?.name||!Number.isInteger(Number(studentProfile?.seatNumber))||Number(studentProfile?.seatNumber)<1||Number(studentProfile?.seatNumber)>50){showWelcome();return}
  const lines=writingInputs.map(i=>i.value.trim());
  if(!lines.some(Boolean)){alert("Please write your introduction first.");return}
  submitInFlight=true;button.disabled=true;button.textContent="Checking...";
@@ -431,7 +432,7 @@ document.getElementById("sendTeacherBtn").onclick=async()=>{
   const photo=resizedPhoto();
   if(photo.length>500000)throw Error("Photo is too large. Please use a smaller image.");
   const TS=firebase.database.ServerValue.TIMESTAMP;
-  const base={studentName:studentProfile.name,grade:studentProfile.grade,className:studentProfile.className,schoolYear,assignmentId,sentences:lines,photo,studentUid:user.uid,contentHash:hash};
+  const base={studentName:studentProfile.name,grade:studentProfile.grade,className:studentProfile.className,seatNumber:studentProfile.seatNumber,schoolYear,assignmentId,sentences:lines,photo,studentUid:user.uid,contentHash:hash};
   let duplicate=false;
   // The transaction runs on the server copy, so repeated clicks or two tabs cannot create duplicates.
   const result=await ref.transaction(current=>{
@@ -480,7 +481,7 @@ async function loadSubmissions(){
    const tr=document.createElement("tr");
    const when=submission.updatedAt||submission.createdAt;
    const date=when?new Date(when).toLocaleString()+((Number(submission.version)||1)>1?` (v${submission.version})`:""):"—";
-   for(const val of [submission.studentName,submission.grade,submission.className,date]){const td=document.createElement("td");td.textContent=val||"—";tr.appendChild(td)}
+   for(const val of [submission.studentName,submission.grade,submission.className,submission.seatNumber?String(submission.seatNumber):"—",date]){const td=document.createElement("td");td.textContent=val||"—";tr.appendChild(td)}
    const statusTd=document.createElement("td");statusTd.textContent=statusLabel(submission);
    if(submission.status==="Updated")statusTd.className="status-updated";
    if(!submission.assignmentId&&currentOwners.has(submission.studentUid+"|"+submission.schoolYear)){const tag=document.createElement("span");tag.className="legacy-tag";tag.textContent="earlier copy";tag.title="Sent before duplicate prevention. This student also has a newer record.";statusTd.appendChild(tag)}
@@ -517,7 +518,7 @@ async function showSubmission(data,id,scroll=true){
  const version=Number(data.version)||1;
  const panel=document.getElementById('portalPreview');panel.replaceChildren();panel.hidden=false;
  const heading=addElement(panel,'div',undefined,'portal-preview-heading');
- addElement(heading,'h3',`${data.studentName} — Grade ${data.grade}, Class ${data.className}`);
+ addElement(heading,'h3',`${data.studentName} — Grade ${data.grade}, Class ${data.className}, Seat ${data.seatNumber||"—"}`);
  const close=addElement(heading,'button','✕ Hide preview');close.type='button';close.onclick=()=>{openSubmissionId=null;hideSubmission();document.querySelectorAll('#submissionRows button[data-preview-id]').forEach(b=>{b.textContent='View';b.setAttribute('aria-expanded','false')})};
  if(version>1){
   const notice=addElement(panel,'div',undefined,'fb-notice');
@@ -566,7 +567,7 @@ async function showSubmission(data,id,scroll=true){
   if(!teacherSession||!teacherAuth.currentUser){msg.textContent='Please sign in as a teacher.';return}
   if(!data.studentUid){msg.textContent='This submission has no student UID.';return}
   const items=rows.map(({radios,correction,comment})=>({mark:radios.querySelector('input:checked').value,correction:correction.value.trim(),comment:comment.value.trim()}));
-  const payload={studentName:data.studentName,grade:String(data.grade),className:String(data.className),sentences,items,version,updatedAt:firebase.database.ServerValue.TIMESTAMP};
+  const payload={studentName:data.studentName,grade:String(data.grade),className:String(data.className),seatNumber:data.seatNumber||null,sentences,items,version,updatedAt:firebase.database.ServerValue.TIMESTAMP};
   const updates={[id]:payload};
   let archiveNote='';
   if(existingFeedback&&existingIsStale){
@@ -642,7 +643,7 @@ document.getElementById('myFeedbackBtn').onclick=async()=>{
   }
   for(const [id,data] of entries){
    const card=addElement(list,'article',undefined,'feedback-card');
-   const h=addElement(card,'h3',`${data.studentName||'My Introduction'} — Grade ${data.grade||'—'}, Class ${data.className||'—'}`);
+   const h=addElement(card,'h3',`${data.studentName||'My Introduction'} — Grade ${data.grade||'—'}, Class ${data.className||'—'}, Seat ${data.seatNumber||'—'}`);
    if(data.archived)addElement(h,'span','Earlier version / 前のバージョン','feedback-earlier-tag');
    if(data.updatedAt)addElement(card,'small','Updated: '+new Date(data.updatedAt).toLocaleString());
    const sentences=feedbackSentences(data);
