@@ -160,6 +160,11 @@ header{background:#286b69;color:white;text-align:center;padding:13px 18px;font-s
 .feedback-card p{overflow-wrap:anywhere}
 </style>
 <style>
+/* Expanded teacher preview stays immediately beneath its student row. */
+.portal-inline-row td{padding:0 8px 18px!important;background:#f4faf9;border-bottom:2px solid #b6d2d0}
+.portal-inline-row #portalPreview{margin:10px 0 0;max-width:100%;min-width:0}
+.portal-selected-row{background:#eef8f6}
+.portal-selected-row td{border-bottom-color:#b6d2d0}
 /* Teacher Portal: compact, collapsible sentence corrections (worksheet look). */
 .fb-list{border-top:1px solid #d5e1df;margin-top:6px}
 .fb-item{border-bottom:1px solid #d5e1df}
@@ -449,7 +454,7 @@ document.getElementById("sendTeacherBtn").onclick=async()=>{
  }catch(err){alert("Could not send. "+err.message+"\nPlease check the Firebase rules before using this feature.")}
  finally{submitInFlight=false;button.disabled=false;button.textContent="📨 Send to Teacher"}
 };
-document.getElementById("openTeacherBtn").onclick=()=>{document.getElementById("teacherPortal").classList.add("show");document.getElementById("portalPreview").hidden=true;showPortalMessage("");if(teacherSession)loadSubmissions()};
+document.getElementById("openTeacherBtn").onclick=()=>{document.getElementById("teacherPortal").classList.add("show");if(!teacherSession)document.getElementById("portalPreview").hidden=true;showPortalMessage("");if(teacherSession)loadSubmissions()};
 document.getElementById("closePortalBtn").onclick=()=>document.getElementById("teacherPortal").classList.remove("show");
 document.getElementById("teacherLoginBtn").onclick=async()=>{
  const email=document.getElementById("teacherEmail").value.trim(),password=document.getElementById("teacherPassword").value;
@@ -471,7 +476,10 @@ async function loadSubmissions(){
  if(!teacherSession)return;
  try{
   const snapshot=await teacherDb.ref("submissions").once("value");submissionCache=snapshot.val()||{};
-  const rows=document.getElementById("submissionRows");rows.replaceChildren();
+   const rows=document.getElementById("submissionRows");
+   const activePreview=document.getElementById('portalPreview');
+   if(rows.contains(activePreview))document.getElementById('portalContent').appendChild(activePreview);
+   rows.replaceChildren();
   const entries=Object.entries(submissionCache).sort((a,b)=>(b[1].updatedAt||b[1].createdAt||0)-(a[1].updatedAt||a[1].createdAt||0));
   document.getElementById("portalCount").textContent=`${entries.length} submissions • ${entries.filter(([k,v])=>v.status!=="Reviewed").length} new`;
   // Older records (sent before one-record-per-student) are kept; tag them when the same student now has a current record.
@@ -489,22 +497,57 @@ async function loadSubmissions(){
    const td=document.createElement("td");
    const view=document.createElement("button");view.textContent=openSubmissionId===id?"Hide":"View";
    view.setAttribute("aria-expanded",String(openSubmissionId===id));
-   view.onclick=()=>{
+    view.onclick=()=>{
     if(openSubmissionId===id){openSubmissionId=null;hideSubmission()}
-    else{openSubmissionId=id;showSubmission(submissionCache[id],id)}
-    rows.querySelectorAll('button[data-preview-id]').forEach(b=>{const selected=b.dataset.previewId===openSubmissionId;b.textContent=selected?'Hide':'View';b.setAttribute('aria-expanded',String(selected))});
+     else{
+      openSubmissionId=id;
+      placeInlinePreview(id);
+      showSubmission(submissionCache[id],id,false);
+      // Scroll the selected student's name into view, not the bottom of the table.
+      tr.scrollIntoView({behavior:'smooth',block:'start'});
+     }
+     updatePreviewButtons();
    };
    view.dataset.previewId=id;
    const review=document.createElement("button");review.textContent=submission.status==="Reviewed"?"✓ Reviewed":"Mark Reviewed";review.disabled=submission.status==="Reviewed";review.onclick=async()=>{try{await teacherDb.ref("submissions/"+id+"/status").set("Reviewed");await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
    const del=document.createElement("button");del.textContent="Delete";del.onclick=async()=>{if(!confirm(`Permanently delete ${submission.studentName}'s submission?`))return;try{await teacherDb.ref("submissions/"+id).remove();await loadSubmissions()}catch(e){showPortalMessage(e.message)}};
    td.append(view,review,del);tr.appendChild(td);rows.appendChild(tr);
   }
-  // Re-render the open preview only if the student's work changed, so unsaved corrections are not lost on refresh.
-  if(openSubmissionId){if(previewStamp(openSubmissionId,submissionCache[openSubmissionId])!==renderedPreviewStamp)showSubmission(submissionCache[openSubmissionId],openSubmissionId,false)}
-  else hideSubmission();
+   // Reattach the existing preview after rebuilding rows; preserve unsaved teacher edits.
+   if(openSubmissionId){
+    placeInlinePreview(openSubmissionId);
+    if(previewStamp(openSubmissionId,submissionCache[openSubmissionId])!==renderedPreviewStamp)showSubmission(submissionCache[openSubmissionId],openSubmissionId,false);
+   }else hideSubmission();
+   updatePreviewButtons();
  }catch(err){showPortalMessage("Could not load submissions: "+err.message)}
 }
-function hideSubmission(){feedbackLoadingToken++;renderedPreviewStamp=null;const panel=document.getElementById("portalPreview");panel.hidden=true;panel.replaceChildren()}
+function updatePreviewButtons(){
+ document.querySelectorAll('#submissionRows button[data-preview-id]').forEach(b=>{
+  const selected=b.dataset.previewId===openSubmissionId;
+  b.textContent=selected?'Hide':'View';b.setAttribute('aria-expanded',String(selected));
+  b.closest('tr')?.classList.toggle('portal-selected-row',selected);
+ });
+}
+function placeInlinePreview(id){
+ const rows=document.getElementById('submissionRows');
+ const button=[...rows.querySelectorAll('button[data-preview-id]')].find(b=>b.dataset.previewId===id);
+ if(!button)return;
+ const row=button.closest('tr');
+ const panel=document.getElementById('portalPreview');
+ // Move (not clone) the preview, keeping its live form controls and listeners intact.
+ rows.querySelectorAll('.portal-inline-row').forEach(r=>r.remove());
+ const detailRow=document.createElement('tr');detailRow.className='portal-inline-row';
+ const cell=document.createElement('td');cell.colSpan=7;cell.appendChild(panel);
+ detailRow.appendChild(cell);row.after(detailRow);
+}
+function hideSubmission(){
+ feedbackLoadingToken++;renderedPreviewStamp=null;
+ const panel=document.getElementById('portalPreview');panel.hidden=true;panel.replaceChildren();
+ // Keep the unique preview element available for the next student.
+ document.querySelectorAll('#submissionRows .portal-inline-row').forEach(r=>r.remove());
+ document.getElementById('portalContent').appendChild(panel);
+ updatePreviewButtons();
+}
 function feedbackSentences(data){
  const raw=sentenceArray(data.sentences);
  return Array.from({length:6},(_,i)=>raw[i]||'');
@@ -519,7 +562,7 @@ async function showSubmission(data,id,scroll=true){
  const panel=document.getElementById('portalPreview');panel.replaceChildren();panel.hidden=false;
  const heading=addElement(panel,'div',undefined,'portal-preview-heading');
  addElement(heading,'h3',`${data.studentName} — Grade ${data.grade}, Class ${data.className}, Seat ${data.seatNumber||"—"}`);
- const close=addElement(heading,'button','✕ Hide preview');close.type='button';close.onclick=()=>{openSubmissionId=null;hideSubmission();document.querySelectorAll('#submissionRows button[data-preview-id]').forEach(b=>{b.textContent='View';b.setAttribute('aria-expanded','false')})};
+ const close=addElement(heading,'button','✕ Hide preview');close.type='button';close.onclick=()=>{openSubmissionId=null;hideSubmission()};
  if(version>1){
   const notice=addElement(panel,'div',undefined,'fb-notice');
   const when=data.updatedAt?new Date(data.updatedAt).toLocaleString():'';
